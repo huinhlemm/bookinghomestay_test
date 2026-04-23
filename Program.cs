@@ -10,35 +10,46 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddDbContext<UngDungDbContext>(options =>
-{
-    // Ưu tiên lấy từ biến môi trường DB_CONNECTION (cho Render/Railway), nếu không có thì lấy từ appsettings.json
-    var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION") 
-                           ?? builder.Configuration.GetConnectionString("DefaultConnection");
-    
-    options.UseMySql(connectionString);
-});
+// ================== DB CONFIG ==================
+var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION") 
+                       ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new Exception("DB_CONNECTION is missing!");
+}
+
+builder.Services.AddDbContext<UngDungDbContext>(options =>
+    options.UseMySql(connectionString,
+        new MySqlServerVersion(new Version(8, 0, 0)))
+);
+
+// ================== SESSION ==================
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromHours(2);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
-// Email service
+
+// ================== EMAIL ==================
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddHostedService<BookingExpiryService>();
 
 var app = builder.Build();
 
-// Auto migrate + seed
+// ================== ⚠️ TẠM TẮT AUTO MIGRATE ==================
+// Tránh crash khi DB chưa connect được
+/*
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<UngDungDbContext>();
     DbInitializer.Initialize(db);
 }
+*/
 
+// ================== MIDDLEWARE ==================
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/TrangChu/Error");
