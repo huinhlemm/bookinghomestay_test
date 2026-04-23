@@ -16,7 +16,7 @@ builder.Services.AddDbContext<UngDungDbContext>(options =>
     var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION") 
                            ?? builder.Configuration.GetConnectionString("DefaultConnection");
     
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+    options.UseMySql(connectionString);
 });
 
 builder.Services.AddSession(options =>
