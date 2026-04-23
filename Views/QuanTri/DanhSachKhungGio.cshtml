@@ -1,0 +1,86 @@
+@model List<KhungGio>
+@{ ViewData["Title"] = "Quản lý khung giờ"; }
+
+<section class="admin-section">
+    <div class="container-custom">
+        <div class="admin-header">
+            <h1><i class="bi bi-clock-fill"></i> Quản lý khung giờ</h1>
+            <div class="admin-nav">
+                <a href="/QuanTri" class="admin-nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                <a href="/QuanTri/DanhSachPhong" class="admin-nav-link"><i class="bi bi-house"></i> Phòng</a>
+                <a href="/QuanTri/DanhSachKhungGio" class="admin-nav-link active"><i class="bi bi-clock"></i> Khung giờ</a>
+                <a href="/QuanTri/DanhSachDatPhong" class="admin-nav-link"><i class="bi bi-calendar-check"></i> Đặt phòng</a>
+                <a href="/QuanTri/DanhSachKhuVuc" class="admin-nav-link"><i class="bi bi-geo-alt"></i> Khu vực</a>
+                <a href="/QuanTri/GiaVaKhuyenMai" class="admin-nav-link"><i class="bi bi-tag"></i> Giá & KM</a>
+                <a href="/QuanTri/CaiDat" class="admin-nav-link"><i class="bi bi-gear"></i> Cài đặt</a>
+                <a href="/QuanTri/QuanLyTaiKhoan" class="admin-nav-link"><i class="bi bi-people"></i> Tài khoản</a>
+                <a href="/TaiKhoan/DangXuat" class="admin-nav-link logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+            </div>
+        </div>
+        <div class="admin-card">
+            <div class="card-header-flex">
+                <h3>Danh sách khung giờ</h3>
+                <button onclick="document.getElementById('formThem').style.display='block'" class="btn-primary-custom btn-sm"><i class="bi bi-plus-circle"></i> Thêm</button>
+            </div>
+            <div id="formThem" style="display:none;" class="admin-form-card">
+                <form method="post" asp-action="ThemKhungGio">
+                    @Html.AntiForgeryToken()
+                    <div class="form-grid-2">
+                        <div class="form-group-custom"><label>Tên khung giờ</label><input type="text" name="TenKhungGio" class="input-custom" required placeholder="VD: Sáng, Trưa, Tối..." /></div>
+                        <div class="form-group-custom"><label>Biểu tượng</label>
+                            <select name="BieuTuong" class="input-custom" style="font-size:1.2rem;">
+                                <option value="☀️">☀️ Sáng</option>
+                                <option value="🌤️">🌤️ Trưa</option>
+                                <option value="🌙">🌙 Tối</option>
+                                <option value="🌜">🌜 Khuya</option>
+                            </select>
+                        </div>
+                        <div class="form-group-custom">
+                            <label>Giờ bắt đầu</label>
+                            <input type="text" name="GioBatDau" class="input-custom" required 
+                                   placeholder="VD: 06:00, 12:00, 18:00" 
+                                   pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                                   title="Nhập giờ theo định dạng HH:mm (VD: 06:00, 23:59)" />
+                        </div>
+                        <div class="form-group-custom">
+                            <label>Giờ kết thúc</label>
+                            <input type="text" name="GioKetThuc" class="input-custom" required 
+                                   placeholder="VD: 12:00, 18:00, 23:59" 
+                                   pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                                   title="Nhập giờ theo định dạng HH:mm (VD: 06:00, 23:59)" />
+                        </div>
+                    </div>
+                    <div class="form-actions"><button type="submit" class="btn-primary-custom"><i class="bi bi-check-circle"></i> Lưu</button><button type="button" onclick="document.getElementById('formThem').style.display='none'" class="btn-outline-custom">Hủy</button></div>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead><tr><th>STT</th><th>Biểu tượng</th><th>Tên</th><th>Bắt đầu</th><th>Kết thúc</th><th></th></tr></thead>
+                    <tbody>
+                        @{ var stt = 1; }
+                        @foreach (var kg in Model) {
+                            <tr>
+                                <td><strong>@stt</strong></td><td style="font-size:1.5rem;">@kg.BieuTuong</td><td><strong>@kg.TenKhungGio</strong></td>
+                                <td>@kg.GioBatDau.ToString(@"hh\:mm")</td><td>@kg.GioKetThuc.ToString(@"hh\:mm")</td>
+                                <td><button onclick="xoaKhungGio(@kg.Id)" class="btn-icon btn-icon-danger"><i class="bi bi-trash"></i></button></td>
+                            </tr>
+                            stt++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+function xoaKhungGio(id) {
+    showConfirm('🗑️', 'Xóa khung giờ', 'Bạn có chắc muốn xóa khung giờ này?', function() {
+        fetch('/QuanTri/XoaKhungGio', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'id=' + id})
+            .then(r => r.json())
+            .then(d => { if (d.success) { showSuccess('Đã xóa!', ''); setTimeout(function(){ location.reload(); }, 1500); } });
+    });
+}
+</script>
+}

@@ -1,0 +1,122 @@
+@model List<TaiKhoan>
+@{ ViewData["Title"] = "Quản lý tài khoản"; }
+
+<section class="admin-section">
+    <div class="container-custom">
+        <div class="admin-header">
+            <h1><i class="bi bi-people-fill"></i> Quản lý tài khoản</h1>
+            <div class="admin-nav">
+                <a href="/QuanTri" class="admin-nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                <a href="/QuanTri/DanhSachPhong" class="admin-nav-link"><i class="bi bi-house"></i> Phòng</a>
+                <a href="/QuanTri/DanhSachKhungGio" class="admin-nav-link"><i class="bi bi-clock"></i> Khung giờ</a>
+                <a href="/QuanTri/DanhSachDatPhong" class="admin-nav-link"><i class="bi bi-calendar-check"></i> Đặt phòng</a>
+                <a href="/QuanTri/DanhSachKhuVuc" class="admin-nav-link"><i class="bi bi-geo-alt"></i> Khu vực</a>
+                <a href="/QuanTri/GiaVaKhuyenMai" class="admin-nav-link"><i class="bi bi-tag"></i> Giá & KM</a>
+                <a href="/QuanTri/CaiDat" class="admin-nav-link"><i class="bi bi-gear"></i> Cài đặt</a>
+                <a href="/QuanTri/QuanLyTaiKhoan" class="admin-nav-link active"><i class="bi bi-people"></i> Tài khoản</a>
+                <a href="/TaiKhoan/DangXuat" class="admin-nav-link logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+            </div>
+        </div>
+
+        <div class="admin-card">
+            <h3><i class="bi bi-people-fill"></i> Danh sách tài khoản (@Model.Count)</h3>
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Tên đăng nhập</th>
+                            <th>Họ tên</th>
+                            <th>Email</th>
+                            <th>SĐT</th>
+                            <th>Vai trò</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày tạo</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var tk in Model)
+                        {
+                            <tr>
+                                <td><strong>@tk.TenDangNhap</strong></td>
+                                <td>@tk.HoTen</td>
+                                <td>@tk.Email</td>
+                                <td>@tk.SoDienThoai</td>
+                                <td>
+                                    @if (tk.VaiTro == "Admin")
+                                    {
+                                        <span class="status-badge status-confirmed">Admin</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-pending">Nhân viên</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (tk.BiKhoa)
+                                    {
+                                        <span class="status-badge status-cancel">Bị khóa</span>
+                                    }
+                                    else if (!tk.DaDuyet)
+                                    {
+                                        <span class="status-badge status-pending">Chờ duyệt</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-done">Đã duyệt</span>
+                                    }
+                                </td>
+                                <td>@tk.NgayTao.ToString("dd-MM-yyyy")</td>
+                                <td>
+                                    <div class="action-btns">
+                                        @if (!tk.DaDuyet)
+                                        {
+                                            <button onclick="duyetTk(@tk.Id)" class="btn-icon btn-icon-success" title="Duyệt">
+                                                <i class="bi bi-check-circle"></i>
+                                            </button>
+                                        }
+                                        @if (tk.TenDangNhap != "admin")
+                                        {
+                                            <button onclick="khoaTk(@tk.Id)" class="btn-icon" title="@(tk.BiKhoa ? "Mở khóa" : "Khóa")">
+                                                <i class="bi bi-@(tk.BiKhoa ? "unlock" : "lock")"></i>
+                                            </button>
+                                            <button onclick="xoaTk(@tk.Id)" class="btn-icon btn-icon-danger" title="Xóa">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+function duyetTk(id) {
+    showConfirm('✅', 'Duyệt tài khoản', 'Bạn có chắc muốn duyệt tài khoản này?', function() {
+        fetch('/QuanTri/DuyetTaiKhoan', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'id=' + id })
+            .then(r => r.json())
+            .then(d => { if (d.success) { showSuccess('Đã duyệt!', 'Tài khoản đã được duyệt.'); setTimeout(function(){ location.reload(); }, 1500); } });
+    });
+}
+function khoaTk(id) {
+    showConfirm('🔒', 'Khóa/Mở khóa', 'Bạn có chắc muốn thay đổi trạng thái tài khoản này?', function() {
+        fetch('/QuanTri/KhoaTaiKhoan', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'id=' + id })
+            .then(r => r.json())
+            .then(d => { if (d.success) { showSuccess('Thành công!', 'Đã cập nhật trạng thái.'); setTimeout(function(){ location.reload(); }, 1500); } });
+    });
+}
+function xoaTk(id) {
+    showConfirm('🗑️', 'Xóa tài khoản', 'Xóa tài khoản này? Hành động không thể hoàn tác!', function() {
+        fetch('/QuanTri/XoaTaiKhoan', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'id=' + id })
+            .then(r => r.json())
+            .then(d => { if (d.success) { showSuccess('Đã xóa!', ''); setTimeout(function(){ location.reload(); }, 1500); } else if (d.message) showError('Lỗi', d.message); });
+    });
+}
+</script>
+}

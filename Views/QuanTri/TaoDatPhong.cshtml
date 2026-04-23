@@ -1,0 +1,86 @@
+@{
+    ViewData["Title"] = "Tạo đặt phòng";
+    var phongs = ViewBag.Phongs as List<Phong>;
+    var khungGios = ViewBag.KhungGios as List<KhungGio>;
+}
+
+<section class="admin-section">
+    <div class="container-custom">
+        <div class="admin-header">
+            <h1><i class="bi bi-plus-circle-fill"></i> Tạo đặt phòng (từ Chat)</h1>
+            <div class="admin-nav">
+                <a href="/QuanTri" class="admin-nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                <a href="/QuanTri/DanhSachDatPhong" class="admin-nav-link active"><i class="bi bi-calendar-check"></i> Đặt phòng</a>
+                <a href="/QuanTri/QuanLyTaiKhoan" class="admin-nav-link"><i class="bi bi-people"></i> Tài khoản</a>
+                <a href="/TaiKhoan/DangXuat" class="admin-nav-link logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+            </div>
+        </div>
+
+        <div class="admin-card" style="max-width:700px;">
+            <form method="post" asp-action="TaoDatPhongXuLy">
+                @Html.AntiForgeryToken()
+                <div class="form-grid-2">
+                    <div class="form-group-custom">
+                        <label><i class="bi bi-person-fill"></i> Tên khách *</label>
+                        <input type="text" name="tenKhach" class="input-custom" required />
+                    </div>
+                    <div class="form-group-custom">
+                        <label><i class="bi bi-telephone-fill"></i> Số điện thoại *</label>
+                        <input type="tel" name="soDienThoai" class="input-custom" required />
+                    </div>
+                </div>
+                <div class="form-group-custom">
+                    <label><i class="bi bi-envelope-fill"></i> Email * <small>(để nhận vé)</small></label>
+                    <input type="email" name="email" class="input-custom" required />
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group-custom">
+                        <label><i class="bi bi-house-fill"></i> Phòng *</label>
+                        <select name="maPhong" class="input-custom" required>
+                            @if (phongs != null) { foreach (var p in phongs) { <option value="@p.Id">@p.TenPhong</option> } }
+                        </select>
+                    </div>
+                    <div class="form-group-custom">
+                        <label><i class="bi bi-calendar3"></i> Ngày nhận phòng *</label>
+                        <input type="date" name="ngayNhanPhong" class="input-custom" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                    </div>
+                </div>
+                <div class="form-group-custom">
+                    <label><i class="bi bi-clock-fill"></i> Khung giờ *</label>
+                    <div class="checkbox-grid">
+                        @if (khungGios != null)
+                        {
+                            foreach (var kg in khungGios)
+                            {
+                                <label class="checkbox-card">
+                                    <input type="checkbox" name="danhSachKhungGioId" value="@kg.Id" />
+                                    <span class="checkbox-content">
+                                        <span class="checkbox-emoji">@kg.BieuTuong</span>
+                                        <strong>@kg.TenKhungGio</strong>
+                                        <small>@kg.GioBatDau.ToString(@"hh\:mm")–@kg.GioKetThuc.ToString(@"hh\:mm")</small>
+                                    </span>
+                                </label>
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="form-group-custom">
+                    <label><i class="bi bi-chat-text-fill"></i> Nguồn đặt</label>
+                    <select name="nguonDat" class="input-custom">
+                        <option value="Web">Web</option>
+                        <option value="Messenger" selected>Messenger</option>
+                        <option value="Zalo">Zalo</option>
+                    </select>
+                </div>
+                <div class="form-group-custom">
+                    <label><i class="bi bi-chat-left-text-fill"></i> Ghi chú</label>
+                    <textarea name="ghiChu" class="input-custom" rows="2"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-circle-fill"></i> Tạo đặt phòng & Sinh QR</button>
+                    <a href="/QuanTri/DanhSachDatPhong" class="btn-outline-custom">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>

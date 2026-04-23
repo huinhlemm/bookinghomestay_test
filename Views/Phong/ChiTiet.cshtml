@@ -1,0 +1,294 @@
+@model ChiTietPhongViewModel
+@{
+    ViewData["Title"] = Model.Phong.TenPhong;
+    var tienNghi = new List<string>();
+    if (!string.IsNullOrEmpty(Model.Phong.TienNghi))
+    {
+        try { tienNghi = System.Text.Json.JsonSerializer.Deserialize<List<string>>(Model.Phong.TienNghi) ?? new(); } catch { }
+    }
+    var iconMap = new Dictionary<string, string> {
+        {"Ghế lười","🛋️"},{"Bồn tắm","🛁"},{"Máy chiếu","📺"},
+        {"Netflix","🎬"},{"Giường King","🛏️"},{"Bàn làm việc","💼"},
+        {"Gương toàn thân","🪞"},{"Ban công","🌿"},{"Wifi tốc độ cao","📶"},
+        {"Bàn trang điểm","💄"},{"Máy bán hàng tự động","🏪"},{"Nhà bếp hiện đại","🍳"},
+        {"Bàn bida","🎱"},{"Ghế đọc sách","📖"},{"Điều hòa","❄️"},
+        {"Tủ lạnh","🧊"},{"Loa bluetooth","🔊"},{"Máy chơi game","🎮"},
+        {"Ấm đun nước","☕"},{"Máy hút bụi","🧹"},
+        {"WiFi","📶"},{"TV","📺"},{"Bếp","🍳"},{"Hồ bơi","💧"},{"BBQ","🔥"}
+    };
+}
+
+@{
+    var hinhAnhList = new List<string>();
+    if (!string.IsNullOrEmpty(Model.Phong.HinhAnh)) {
+        try { hinhAnhList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(Model.Phong.HinhAnh) ?? new(); } catch {}
+        if (!hinhAnhList.Any() && Model.Phong.HinhAnh.StartsWith("/")) hinhAnhList.Add(Model.Phong.HinhAnh);
+    }
+}
+
+<section class="room-detail-section">
+    <div class="container-custom">
+        <div class="breadcrumb-custom">
+            <a href="/">Trang chủ</a> <i class="bi bi-chevron-right"></i>
+            <a href="/Phong">Phòng</a> <i class="bi bi-chevron-right"></i>
+            <span>@Model.Phong.TenPhong</span>
+        </div>
+
+        <div class="room-detail-grid">
+            <!-- Left: Image & Info -->
+            <div class="room-detail-main">
+                <!-- Image Slider -->
+                <div class="room-slider" id="roomSlider">
+                    @if (hinhAnhList.Any())
+                    {
+                        @for (int i = 0; i < hinhAnhList.Count; i++)
+                        {
+                            <div class="room-slide @(i == 0 ? "active" : "")">
+                                <img src="@hinhAnhList[i]" alt="@Model.Phong.TenPhong" />
+                            </div>
+                        }
+                        @if (hinhAnhList.Count > 1)
+                        {
+                            <button class="slider-btn slider-prev" onclick="slideRoom(-1)"><i class="bi bi-chevron-left"></i></button>
+                            <button class="slider-btn slider-next" onclick="slideRoom(1)"><i class="bi bi-chevron-right"></i></button>
+                            <div class="slider-dots">
+                                @for (int i = 0; i < hinhAnhList.Count; i++)
+                                {
+                                    <span class="slider-dot @(i == 0 ? "active" : "")" onclick="goToRoomSlide(@i)"></span>
+                                }
+                            </div>
+                            <div class="slider-counter"><span id="slideNum">1</span>/@hinhAnhList.Count</div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="room-slide active">
+                            <div class="room-card-placeholder" style="height:380px;border-radius:0;">
+                                <i class="bi bi-house" style="font-size:4rem;"></i>
+                                <p>@Model.Phong.TenPhong</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="room-detail-info">
+                    <h1>@Model.Phong.TenPhong</h1>
+                    <div class="room-detail-meta">
+                        <span class="badge-type"><i class="bi bi-tag"></i> @Model.Phong.LoaiPhong?.TenLoaiPhong</span>
+                        <span><i class="bi bi-geo-alt-fill"></i> @Model.Phong.KhuVuc?.TenKhuVuc</span>
+                        <span><i class="bi bi-arrows-fullscreen"></i> @Model.Phong.DienTich m²</span>
+                        <span><i class="bi bi-people-fill"></i> Tối đa @Model.Phong.SoNguoiToiDa người</span>
+                    </div>
+                    <p class="room-detail-desc">@Model.Phong.MoTa</p>
+                    <p class="room-detail-address"><i class="bi bi-pin-map-fill"></i> @Model.Phong.DiaChi</p>
+                </div>
+
+                <!-- Tiện nghi -->
+                <div class="room-amenities">
+                    <h2><i class="bi bi-star-fill"></i> Tiện nghi</h2>
+                    <div class="amenities-grid">
+                        @foreach (var tn in tienNghi)
+                        {
+                            var icon = iconMap.GetValueOrDefault(tn, "✅");
+                            <div class="amenity-item">
+                                <span style="font-size:1.3rem;">@icon</span>
+                                <span>@tn</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Pricing & Booking -->
+            <div class="room-detail-sidebar">
+                <div class="pricing-card">
+                    <h3><i class="bi bi-tag-fill"></i> Giá theo khung giờ</h3>
+                    <div class="pricing-list">
+                        @foreach (var kg in Model.DanhSachKhungGio.OrderBy(k => k.ThuTu))
+                        {
+                            var gia = Model.DanhSachGia.FirstOrDefault(g => g.MaKhungGio == kg.Id);
+                            <div class="pricing-item">
+                                <div class="pricing-slot">
+                                    <span class="slot-emoji">@kg.BieuTuong</span>
+                                    <div>
+                                        <strong>@kg.TenKhungGio</strong>
+                                        <small>@kg.GioBatDau.ToString(@"hh\:mm") – @kg.GioKetThuc.ToString(@"hh\:mm")</small>
+                                    </div>
+                                </div>
+                                <span class="pricing-amount">@((gia?.Gia ?? 0).ToString("N0"))đ</span>
+                            </div>
+                        }
+                    </div>
+
+                    <a href="/DatPhong?maPhong=@Model.Phong.Id" class="btn-primary-custom btn-block">
+                        <i class="bi bi-calendar-check"></i> Đặt phòng ngay
+                    </a>
+
+                    <div class="chat-booking-btns">
+                        @if (Model.CaiDat.ContainsKey("LinkMessenger"))
+                        {
+                            <a href="@Model.CaiDat["LinkMessenger"]" target="_blank" class="btn-messenger">
+                                <i class="bi bi-messenger"></i> Đặt qua Messenger
+                            </a>
+                        }
+                        @if (Model.CaiDat.ContainsKey("LinkZalo"))
+                        {
+                            <a href="@Model.CaiDat["LinkZalo"]" target="_blank" class="btn-zalo">
+                                <i class="bi bi-chat-dots-fill"></i> Đặt qua Zalo
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related rooms -->
+        @if (Model.PhongLienQuan.Any())
+        {
+            <div class="section-header" style="margin-top:3rem;">
+                <h2 class="section-title">Phòng cùng khu vực</h2>
+            </div>
+            <div class="rooms-grid">
+                @foreach (var p in Model.PhongLienQuan)
+                {
+                    var giaMin = p.DanhSachGia?.Min(g => g.Gia) ?? 0;
+                    <div class="room-card">
+                        <div class="room-card-image">
+                            <div class="room-card-placeholder"><i class="bi bi-house"></i></div>
+                            <div class="room-card-overlay">
+                                <a href="/Phong/ChiTiet/@p.Id" class="btn-view">Xem chi tiết</a>
+                            </div>
+                        </div>
+                        <div class="room-card-body">
+                            <h3 class="room-name">@p.TenPhong</h3>
+                            <div class="room-card-footer">
+                                <div class="room-price">
+                                    <span class="price-value">@giaMin.ToString("N0")đ</span>
+                                    <span class="price-unit">/khung giờ</span>
+                                </div>
+                                <a href="/DatPhong?maPhong=@p.Id" class="btn-book"><i class="bi bi-calendar-check"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+<style>
+    .room-slider {
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px;
+        background: var(--bg-surface);
+        aspect-ratio: 16/10;
+    }
+    .room-slide {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity .5s ease;
+    }
+    .room-slide.active { opacity: 1; position: relative; }
+    .room-slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .slider-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(0,0,0,0.45);
+        color: #fff;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .2s;
+        backdrop-filter: blur(4px);
+    }
+    .slider-btn:hover { background: rgba(0,0,0,0.7); transform: translateY(-50%) scale(1.1); }
+    .slider-prev { left: 12px; }
+    .slider-next { right: 12px; }
+    .slider-dots {
+        position: absolute;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 5;
+        display: flex;
+        gap: 6px;
+    }
+    .slider-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.4);
+        cursor: pointer;
+        transition: all .2s;
+    }
+    .slider-dot.active { background: #fff; transform: scale(1.4); }
+    .slider-counter {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(0,0,0,0.5);
+        color: #fff;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        z-index: 5;
+        backdrop-filter: blur(4px);
+    }
+</style>
+
+@section Scripts {
+<script>
+var roomSlides = document.querySelectorAll('#roomSlider .room-slide');
+var roomDots = document.querySelectorAll('#roomSlider .slider-dot');
+var currentRoomSlide = 0;
+
+function goToRoomSlide(index) {
+    roomSlides.forEach(function(s) { s.classList.remove('active'); });
+    roomDots.forEach(function(d) { d.classList.remove('active'); });
+    currentRoomSlide = index;
+    if (currentRoomSlide < 0) currentRoomSlide = roomSlides.length - 1;
+    if (currentRoomSlide >= roomSlides.length) currentRoomSlide = 0;
+    roomSlides[currentRoomSlide].classList.add('active');
+    if (roomDots[currentRoomSlide]) roomDots[currentRoomSlide].classList.add('active');
+    var counter = document.getElementById('slideNum');
+    if (counter) counter.textContent = currentRoomSlide + 1;
+}
+
+function slideRoom(dir) {
+    goToRoomSlide(currentRoomSlide + dir);
+}
+
+// Keyboard support
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft') slideRoom(-1);
+    if (e.key === 'ArrowRight') slideRoom(1);
+});
+
+// Touch swipe support
+var slider = document.getElementById('roomSlider');
+var touchStartX = 0;
+if (slider) {
+    slider.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; });
+    slider.addEventListener('touchend', function(e) {
+        var diff = touchStartX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 40) slideRoom(diff > 0 ? 1 : -1);
+    });
+}
+</script>
+}

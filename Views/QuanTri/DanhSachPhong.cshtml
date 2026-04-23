@@ -1,0 +1,436 @@
+@model List<Phong>
+@{
+    ViewData["Title"] = "Quản lý phòng";
+    var loaiPhongs = ViewBag.LoaiPhongs as List<LoaiPhong>;
+    var khuVucs = ViewBag.KhuVucs as List<KhuVuc>;
+}
+
+<section class="admin-section">
+    <div class="container-custom">
+        <div class="admin-header">
+            <h1><i class="bi bi-house-fill"></i> Quản lý phòng</h1>
+            <div class="admin-nav">
+                <a href="/QuanTri" class="admin-nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                <a href="/QuanTri/DanhSachPhong" class="admin-nav-link active"><i class="bi bi-house"></i> Phòng</a>
+                <a href="/QuanTri/DanhSachKhungGio" class="admin-nav-link"><i class="bi bi-clock"></i> Khung giờ</a>
+                <a href="/QuanTri/DanhSachDatPhong" class="admin-nav-link"><i class="bi bi-calendar-check"></i> Đặt phòng</a>
+                <a href="/QuanTri/DanhSachKhuVuc" class="admin-nav-link"><i class="bi bi-geo-alt"></i> Khu vực</a>
+                <a href="/QuanTri/GiaVaKhuyenMai" class="admin-nav-link"><i class="bi bi-tag"></i> Giá & KM</a>
+                <a href="/QuanTri/CaiDat" class="admin-nav-link"><i class="bi bi-gear"></i> Cài đặt</a>
+                <a href="/QuanTri/QuanLyTaiKhoan" class="admin-nav-link"><i class="bi bi-people"></i> Tài khoản</a>
+                <a href="/TaiKhoan/DangXuat" class="admin-nav-link logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+            </div>
+        </div>
+
+        <div class="admin-card">
+            <div class="card-header-flex">
+                <h3>Danh sách phòng (@Model.Count)</h3>
+                <button onclick="document.getElementById('formThemPhong').style.display='block'" class="btn-primary-custom btn-sm">
+                    <i class="bi bi-plus-circle"></i> Thêm phòng
+                </button>
+            </div>
+
+            <!-- Add Room Form (hidden by default) -->
+            <div id="formThemPhong" style="display:none;" class="admin-form-card">
+                <h4>Thêm phòng mới</h4>
+                <form method="post" asp-action="ThemPhong">
+                    @Html.AntiForgeryToken()
+                    <div class="form-grid-2">
+                        <div class="form-group-custom">
+                            <label>Tên phòng *</label>
+                            <input type="text" name="TenPhong" class="input-custom" required />
+                        </div>
+                        <div class="form-group-custom">
+                            <label>Loại phòng</label>
+                            <select name="MaLoaiPhong" class="input-custom">
+                                @if (loaiPhongs != null) { foreach (var lp in loaiPhongs) { <option value="@lp.Id">@lp.TenLoaiPhong</option> } }
+                            </select>
+                        </div>
+                        <div class="form-group-custom">
+                            <label>Khu vực</label>
+                            <select name="MaKhuVuc" class="input-custom">
+                                @if (khuVucs != null) { foreach (var kv in khuVucs) { <option value="@kv.Id">@kv.TenKhuVuc</option> } }
+                            </select>
+                        </div>
+                        <div class="form-group-custom">
+                            <label>Diện tích (m²)</label>
+                            <input type="number" name="DienTich" class="input-custom" value="25" />
+                        </div>
+                        <div class="form-group-custom">
+                            <label>Số người tối đa</label>
+                            <input type="number" name="SoNguoiToiDa" class="input-custom" value="2" />
+                        </div>
+                        <div class="form-group-custom">
+                            <label><i class="bi bi-images"></i> Hình ảnh phòng</label>
+                            <input type="hidden" name="HinhAnh" id="hinhAnhInput" value="[]" />
+                            <div style="margin-bottom:8px;">
+                                <label style="cursor:pointer;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
+                                    <i class="bi bi-cloud-arrow-up"></i> Thêm ảnh (chọn nhiều)
+                                    <input type="file" accept="image/*" multiple style="display:none;" onchange="uploadPhongImages(this)" />
+                                </label>
+                                <span id="uploadStatusPhong" style="font-size:12px;color:#999;margin-left:8px;"></span>
+                            </div>
+                            <div id="phongImgGallery" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+                        </div>
+                    </div>
+                    <div class="form-group-custom">
+                        <label>Địa chỉ</label>
+                        <input type="text" name="DiaChi" class="input-custom" />
+                    </div>
+                    <div class="form-group-custom">
+                        <label>Mô tả</label>
+                        <textarea name="MoTa" class="input-custom" rows="2"></textarea>
+                    </div>
+                    <div class="form-group-custom">
+                        <label><i class="bi bi-stars"></i> Tiện nghi phòng</label>
+                        <input type="hidden" name="TienNghi" id="tienNghiInput" value="[]" />
+                        <div id="tienNghiTags" style="display:flex;flex-wrap:wrap;gap:8px;">
+                        </div>
+                    </div>
+                    <h5>Giá theo khung giờ</h5>
+                    <div class="form-grid-2">
+                        @if (ViewBag.KhungGios is List<KhungGio> khungGios)
+                        {
+                            foreach (var kg in khungGios)
+                            {
+                                <div class="form-group-custom">
+                                    <label>@kg.BieuTuong @kg.TenKhungGio (@kg.GioBatDau.ToString(@"hh\:mm")-@kg.GioKetThuc.ToString(@"hh\:mm"))</label>
+                                    <input type="number" name="giaTheoKhung" class="input-custom" value="200000" />
+                                </div>
+                            }
+                        }
+                    </div>
+                    <input type="hidden" name="TrangThai" value="true" />
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary-custom"><i class="bi bi-check-circle"></i> Lưu</button>
+                        <button type="button" onclick="document.getElementById('formThemPhong').style.display='none'" class="btn-outline-custom">Hủy</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên phòng</th>
+                            <th>Loại</th>
+                            <th>Khu vực</th>
+                            <th>Diện tích</th>
+                            <th>Max</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model)
+                        {
+                            <tr>
+                                <td>@p.Id</td>
+                                <td><strong>@p.TenPhong</strong></td>
+                                <td>@p.LoaiPhong?.TenLoaiPhong</td>
+                                <td>@p.KhuVuc?.TenKhuVuc</td>
+                                <td>@p.DienTich m²</td>
+                                <td>@p.SoNguoiToiDa</td>
+                                <td>
+                                    @if (p.TrangThai) { <span class="status-badge status-confirmed">Hoạt động</span> }
+                                    else { <span class="status-badge status-cancel">Tạm ngưng</span> }
+                                </td>
+                                <td>
+                                    <div class="action-btns">
+                                        <a href="/Phong/ChiTiet/@p.Id" class="btn-icon" title="Xem"><i class="bi bi-eye"></i></a>
+                                        <button onclick="suaPhong(@p.Id)" class="btn-icon" title="Sửa" style="color:var(--primary);"><i class="bi bi-pencil-square"></i></button>
+                                        <button onclick="xoaPhong(@p.Id)" class="btn-icon btn-icon-danger" title="Xóa"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal Sửa Phòng -->
+        <div id="modalSuaPhong" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.5);overflow-y:auto;padding:2rem 1rem;">
+            <div style="max-width:600px;margin:0 auto;background:var(--bg-card);border-radius:16px;padding:1.5rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                    <h3 style="margin:0;"><i class="bi bi-pencil-square"></i> Sửa phòng</h3>
+                    <button onclick="document.getElementById('modalSuaPhong').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text);">&times;</button>
+                </div>
+                <form method="post" asp-action="SuaPhong" asp-controller="QuanTri">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" id="editId" />
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="form-group-custom">
+                            <label>Tên phòng</label>
+                            <input type="text" name="TenPhong" id="editTenPhong" class="input-custom" required />
+                        </div>
+                        <div class="form-group-custom">
+                            <label>Loại phòng</label>
+                            <select name="MaLoaiPhong" id="editMaLoaiPhong" class="input-custom">
+                                @if (loaiPhongs != null) { foreach (var lp in loaiPhongs) { <option value="@lp.Id">@lp.TenLoaiPhong</option> } }
+                            </select>
+                        </div>
+                        <div class="form-group-custom">
+                            <label>Khu vực</label>
+                            <select name="MaKhuVuc" id="editMaKhuVuc" class="input-custom">
+                                @if (khuVucs != null) { foreach (var kv in khuVucs) { <option value="@kv.Id">@kv.TenKhuVuc</option> } }
+                            </select>
+                        </div>
+                        <div class="form-group-custom">
+                            <label>Diện tích (m²)</label>
+                            <input type="number" name="DienTich" id="editDienTich" class="input-custom" />
+                        </div>
+                        <div class="form-group-custom">
+                            <label>Số người tối đa</label>
+                            <input type="number" name="SoNguoiToiDa" id="editSoNguoiToiDa" class="input-custom" />
+                        </div>
+                        <div class="form-group-custom">
+                            <label>Trạng thái</label>
+                            <select name="TrangThai" id="editTrangThai" class="input-custom">
+                                <option value="true">Hoạt động</option>
+                                <option value="false">Tạm ngưng</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group-custom">
+                        <label>Địa chỉ</label>
+                        <input type="text" name="DiaChi" id="editDiaChi" class="input-custom" />
+                    </div>
+                    <div class="form-group-custom">
+                        <label>Mô tả</label>
+                        <textarea name="MoTa" id="editMoTa" class="input-custom" rows="2"></textarea>
+                    </div>
+                    <div class="form-group-custom">
+                        <label><i class="bi bi-stars"></i> Tiện nghi phòng</label>
+                        <input type="hidden" name="TienNghi" id="editTienNghi" />
+                        <div id="editTienNghiTags" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+                    </div>
+                    <div class="form-group-custom">
+                        <label><i class="bi bi-images"></i> Hình ảnh phòng</label>
+                        <input type="hidden" name="HinhAnh" id="editHinhAnh" value="[]" />
+                        <div style="margin-bottom:8px;">
+                            <label style="cursor:pointer;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
+                                <i class="bi bi-cloud-arrow-up"></i> Thêm ảnh
+                                <input type="file" accept="image/*" multiple style="display:none;" onchange="uploadEditImages(this)" />
+                            </label>
+                            <span id="editUploadStatus" style="font-size:12px;color:#999;margin-left:8px;"></span>
+                        </div>
+                        <div id="editImgGallery" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary-custom"><i class="bi bi-check-circle"></i> Lưu thay đổi</button>
+                        <button type="button" onclick="document.getElementById('modalSuaPhong').style.display='none'" class="btn-outline-custom">Hủy</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+// === Tiện nghi tags ===
+var danhSachTienNghi = [
+    {icon:'🛋️', name:'Ghế lười'}, {icon:'🛁', name:'Bồn tắm'}, {icon:'📺', name:'Máy chiếu'},
+    {icon:'🎬', name:'Netflix'}, {icon:'🛏️', name:'Giường King'}, {icon:'💼', name:'Bàn làm việc'},
+    {icon:'🪞', name:'Gương toàn thân'}, {icon:'🌿', name:'Ban công'}, {icon:'📶', name:'Wifi tốc độ cao'},
+    {icon:'💄', name:'Bàn trang điểm'}, {icon:'🏪', name:'Máy bán hàng tự động'}, {icon:'🍳', name:'Nhà bếp hiện đại'},
+    {icon:'🎱', name:'Bàn bida'}, {icon:'📖', name:'Ghế đọc sách'}, {icon:'❄️', name:'Điều hòa'},
+    {icon:'🧊', name:'Tủ lạnh'}, {icon:'🔊', name:'Loa bluetooth'}, {icon:'🎮', name:'Máy chơi game'},
+    {icon:'☕', name:'Ấm đun nước'}, {icon:'🧹', name:'Máy hút bụi'}
+];
+
+var selectedTienNghi = [];
+
+function renderTienNghiTags(containerId, inputId, selected) {
+    var container = document.getElementById(containerId);
+    container.innerHTML = '';
+    danhSachTienNghi.forEach(function(tn) {
+        var isActive = selected.indexOf(tn.name) >= 0;
+        var tag = document.createElement('div');
+        tag.className = 'tien-nghi-tag' + (isActive ? ' tn-active' : '');
+        tag.innerHTML = '<span style="font-size:16px;">' + tn.icon + '</span> ' + tn.name;
+        tag.onclick = function() {
+            var idx = selected.indexOf(tn.name);
+            if (idx >= 0) { selected.splice(idx, 1); tag.classList.remove('tn-active'); }
+            else { selected.push(tn.name); tag.classList.add('tn-active'); }
+            document.getElementById(inputId).value = JSON.stringify(selected);
+        };
+        container.appendChild(tag);
+    });
+}
+
+// Init tags for create form
+renderTienNghiTags('tienNghiTags', 'tienNghiInput', selectedTienNghi);
+
+function suaPhong(id) {
+    fetch('/QuanTri/LayPhong?id=' + id)
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success) return;
+            var p = d.phong;
+            document.getElementById('editId').value = p.id;
+            document.getElementById('editTenPhong').value = p.tenPhong;
+            document.getElementById('editMoTa').value = p.moTa || '';
+            document.getElementById('editDienTich').value = p.dienTich;
+            document.getElementById('editSoNguoiToiDa').value = p.soNguoiToiDa;
+            document.getElementById('editDiaChi').value = p.diaChi || '';
+            document.getElementById('editMaLoaiPhong').value = p.maLoaiPhong;
+            document.getElementById('editMaKhuVuc').value = p.maKhuVuc;
+            document.getElementById('editTrangThai').value = p.trangThai ? 'true' : 'false';
+            
+            // Tien nghi - render tags
+            var editSelectedTN = [];
+            try { editSelectedTN = JSON.parse(p.tienNghi || '[]'); } catch(e) {}
+            document.getElementById('editTienNghi').value = JSON.stringify(editSelectedTN);
+            renderTienNghiTags('editTienNghiTags', 'editTienNghi', editSelectedTN);
+            
+            // Hinh anh
+            var imgs = [];
+            try { imgs = JSON.parse(p.hinhAnh || '[]'); } catch(e) {}
+            document.getElementById('editHinhAnh').value = JSON.stringify(imgs);
+            var gallery = document.getElementById('editImgGallery');
+            gallery.innerHTML = '';
+            imgs.forEach(function(src) {
+                var wrap = document.createElement('div');
+                wrap.style.cssText = 'position:relative;display:inline-block;';
+                wrap.innerHTML = '<img src="' + src + '" style="width:80px;height:60px;object-fit:cover;border-radius:8px;border:2px solid var(--border);" />' +
+                    '<button type="button" onclick="xoaEditImg(this,\'' + src + '\')" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#e53935;color:#fff;border:none;font-size:11px;cursor:pointer;line-height:1;">×</button>';
+                gallery.appendChild(wrap);
+            });
+            
+            document.getElementById('modalSuaPhong').style.display = 'block';
+        });
+}
+
+
+
+function uploadEditImages(input) {
+    var files = input.files;
+    if (!files.length) return;
+    var status = document.getElementById('editUploadStatus');
+    status.textContent = 'Đang tải...';
+    status.style.color = '#667eea';
+    var currentVal = document.getElementById('editHinhAnh').value;
+    var images = [];
+    try { images = JSON.parse(currentVal) || []; } catch(e) { images = []; }
+    var uploaded = 0, total = files.length;
+    for (var i = 0; i < files.length; i++) {
+        (function(file) {
+            var fd = new FormData(); fd.append('file', file);
+            fetch('/QuanTri/UploadHinhAnh', { method: 'POST', body: fd })
+                .then(r => r.json()).then(d => {
+                    uploaded++;
+                    if (d.success) {
+                        images.push(d.filePath);
+                        var gallery = document.getElementById('editImgGallery');
+                        var wrap = document.createElement('div');
+                        wrap.style.cssText = 'position:relative;display:inline-block;';
+                        wrap.innerHTML = '<img src="' + d.filePath + '" style="width:80px;height:60px;object-fit:cover;border-radius:8px;border:2px solid var(--border);" />' +
+                            '<button type="button" onclick="xoaEditImg(this,\'' + d.filePath + '\')" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#e53935;color:#fff;border:none;font-size:11px;cursor:pointer;line-height:1;">×</button>';
+                        gallery.appendChild(wrap);
+                    }
+                    if (uploaded === total) {
+                        document.getElementById('editHinhAnh').value = JSON.stringify(images);
+                        status.textContent = '✅ Xong';
+                        status.style.color = '#2e7d32';
+                    }
+                });
+        })(files[i]);
+    }
+    input.value = '';
+}
+
+function xoaEditImg(btn, src) {
+    var val = document.getElementById('editHinhAnh').value;
+    var imgs = []; try { imgs = JSON.parse(val) || []; } catch(e) {}
+    imgs = imgs.filter(function(i) { return i !== src; });
+    document.getElementById('editHinhAnh').value = JSON.stringify(imgs);
+    btn.parentElement.remove();
+}
+function xoaPhong(id) {
+    showConfirm('🗑️', 'Xóa phòng', 'Bạn có chắc muốn xóa phòng này?', function() {
+        fetch('/QuanTri/XoaPhong', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'id=' + id })
+            .then(r => r.json())
+            .then(d => { if (d.success) { showSuccess('Đã xóa!', ''); setTimeout(function(){ location.reload(); }, 1500); } });
+    });
+}
+function uploadPhongImages(input) {
+    var files = input.files;
+    if (!files.length) return;
+    var status = document.getElementById('uploadStatusPhong');
+    status.textContent = 'Đang tải ' + files.length + ' ảnh...';
+    status.style.color = '#667eea';
+    
+    var currentVal = document.getElementById('hinhAnhInput').value;
+    var images = [];
+    try { images = JSON.parse(currentVal) || []; } catch(e) { images = []; }
+    
+    var uploaded = 0;
+    var total = files.length;
+    
+    for (var i = 0; i < files.length; i++) {
+        (function(file) {
+            var fd = new FormData();
+            fd.append('file', file);
+            fetch('/QuanTri/UploadHinhAnh', { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(d => {
+                    uploaded++;
+                    if (d.success) {
+                        images.push(d.filePath);
+                        addPhongImgThumb(d.filePath, images);
+                    }
+                    if (uploaded === total) {
+                        document.getElementById('hinhAnhInput').value = JSON.stringify(images);
+                        status.textContent = '✅ Đã tải ' + images.length + ' ảnh';
+                        status.style.color = '#2e7d32';
+                    }
+                });
+        })(files[i]);
+    }
+    input.value = '';
+}
+
+function addPhongImgThumb(src, imagesRef) {
+    var gallery = document.getElementById('phongImgGallery');
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;display:inline-block;';
+    wrap.innerHTML = '<img src="' + src + '" style="width:80px;height:60px;object-fit:cover;border-radius:8px;border:2px solid var(--border);" />' +
+        '<button type="button" onclick="xoaPhongImg(this,\'' + src + '\')" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#e53935;color:#fff;border:none;font-size:11px;cursor:pointer;line-height:1;">×</button>';
+    gallery.appendChild(wrap);
+}
+
+function xoaPhongImg(btn, src) {
+    var currentVal = document.getElementById('hinhAnhInput').value;
+    var images = [];
+    try { images = JSON.parse(currentVal) || []; } catch(e) { images = []; }
+    images = images.filter(function(i) { return i !== src; });
+    document.getElementById('hinhAnhInput').value = JSON.stringify(images);
+    btn.parentElement.remove();
+}
+</script>
+<style>
+    .tien-nghi-tag {
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 2px solid var(--border);
+        background: var(--bg-surface);
+        color: var(--text-secondary);
+        font-size: 13px;
+        cursor: pointer;
+        transition: all .2s;
+        user-select: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .tien-nghi-tag:hover { border-color: var(--primary); color: var(--primary); }
+    .tn-active {
+        background: var(--primary) !important;
+        border-color: var(--primary) !important;
+        color: #fff !important;
+    }
+</style>
+}

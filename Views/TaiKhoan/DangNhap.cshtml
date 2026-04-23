@@ -1,0 +1,40 @@
+@{
+    ViewData["Title"] = "Đăng nhập quản trị";
+}
+
+<section class="login-section">
+    <div class="login-card">
+        <div class="login-header">
+            <i class="bi bi-shield-lock-fill"></i>
+            <h1>Đăng nhập Quản trị</h1>
+            <p>Vui lòng đăng nhập để quản lý hệ thống</p>
+        </div>
+
+        @if (ViewBag.Loi != null)
+        {
+            <div class="alert-error">
+                <i class="bi bi-exclamation-circle-fill"></i> @ViewBag.Loi
+            </div>
+        }
+
+        <form method="post" asp-action="DangNhap">
+            @Html.AntiForgeryToken()
+            <div class="form-group-custom">
+                <label><i class="bi bi-person-fill"></i> Tên đăng nhập</label>
+                <input type="text" name="tenDangNhap" class="input-custom" required placeholder="admin" autofocus />
+            </div>
+            <div class="form-group-custom">
+                <label><i class="bi bi-lock-fill"></i> Mật khẩu</label>
+                <input type="password" name="matKhau" class="input-custom" required placeholder="••••••••" />
+            </div>
+            <button type="submit" class="btn-primary-custom btn-block">
+                <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+            </button>
+        </form>
+
+        <div class="login-footer" style="display:flex;justify-content:space-between;align-items:center;">
+            <a href="/"><i class="bi bi-arrow-left"></i> Về trang chủ</a>
+            <a href="/TaiKhoan/DangKy"><i class="bi bi-person-plus"></i> Đăng ký tài khoản</a>
+        </div>
+    </div>
+</section>

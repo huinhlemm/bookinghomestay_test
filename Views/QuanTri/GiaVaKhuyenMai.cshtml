@@ -1,0 +1,74 @@
+@model List<KhuyenMai>
+@{ ViewData["Title"] = "Giá & Khuyến mãi";
+   var khungGios = ViewBag.KhungGios as List<KhungGio>;
+}
+
+<section class="admin-section">
+    <div class="container-custom">
+        <div class="admin-header">
+            <h1><i class="bi bi-tag-fill"></i> Giá & Khuyến mãi</h1>
+            <div class="admin-nav">
+                <a href="/QuanTri" class="admin-nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                <a href="/QuanTri/DanhSachPhong" class="admin-nav-link"><i class="bi bi-house"></i> Phòng</a>
+                <a href="/QuanTri/DanhSachKhungGio" class="admin-nav-link"><i class="bi bi-clock"></i> Khung giờ</a>
+                <a href="/QuanTri/DanhSachDatPhong" class="admin-nav-link"><i class="bi bi-calendar-check"></i> Đặt phòng</a>
+                <a href="/QuanTri/DanhSachKhuVuc" class="admin-nav-link"><i class="bi bi-geo-alt"></i> Khu vực</a>
+                <a href="/QuanTri/GiaVaKhuyenMai" class="admin-nav-link active"><i class="bi bi-tag"></i> Giá & KM</a>
+                <a href="/QuanTri/CaiDat" class="admin-nav-link"><i class="bi bi-gear"></i> Cài đặt</a>
+                <a href="/QuanTri/QuanLyTaiKhoan" class="admin-nav-link"><i class="bi bi-people"></i> Tài khoản</a>
+                <a href="/TaiKhoan/DangXuat" class="admin-nav-link logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+            </div>
+        </div>
+        <div class="admin-card">
+            <div class="card-header-flex">
+                <h3>Khuyến mãi</h3>
+                <button onclick="document.getElementById('formThem').style.display='block'" class="btn-primary-custom btn-sm"><i class="bi bi-plus-circle"></i> Thêm</button>
+            </div>
+            <div id="formThem" style="display:none;" class="admin-form-card">
+                <form method="post" asp-action="ThemKhuyenMai">
+                    @Html.AntiForgeryToken()
+                    <div class="form-grid-2">
+                        <div class="form-group-custom"><label>Tên khuyến mãi</label><input type="text" name="TenKhuyenMai" class="input-custom" required /></div>
+                        <div class="form-group-custom"><label>Phần trăm giảm (%)</label><input type="number" name="PhanTramGiam" class="input-custom" value="10" /></div>
+                        <div class="form-group-custom">
+                            <label>Loại giảm</label>
+                            <select name="LoaiGiam" class="input-custom">
+                                <option value="TheoKhungGio">Theo khung giờ</option>
+                                <option value="TheoSoGio">Theo số giờ</option>
+                            </select>
+                        </div>
+                        <div class="form-group-custom"><label>Số giờ tối thiểu (nếu theo số giờ)</label><input type="number" name="SoGioToiThieu" class="input-custom" /></div>
+                        <div class="form-group-custom">
+                            <label>Khung giờ áp dụng</label>
+                            <select name="MaKhungGio" class="input-custom">
+                                <option value="">Tất cả</option>
+                                @if (khungGios != null) { foreach (var kg in khungGios) { <option value="@kg.Id">@kg.BieuTuong @kg.TenKhungGio</option> } }
+                            </select>
+                        </div>
+                        <div class="form-group-custom"><label>Ngày bắt đầu</label><input type="date" name="NgayBatDau" class="input-custom" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></div>
+                        <div class="form-group-custom"><label>Ngày kết thúc</label><input type="date" name="NgayKetThuc" class="input-custom" value="@DateTime.Today.AddMonths(1).ToString("yyyy-MM-dd")" /></div>
+                    </div>
+                    <div class="form-actions"><button type="submit" class="btn-primary-custom"><i class="bi bi-check-circle"></i> Lưu</button><button type="button" onclick="document.getElementById('formThem').style.display='none'" class="btn-outline-custom">Hủy</button></div>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead><tr><th>Tên</th><th>Loại</th><th>Giảm</th><th>Khung giờ</th><th>Từ</th><th>Đến</th><th>TT</th></tr></thead>
+                    <tbody>
+                        @foreach (var km in Model) {
+                            <tr>
+                                <td><strong>@km.TenKhuyenMai</strong></td>
+                                <td>@km.LoaiGiam</td>
+                                <td><span class="status-badge status-confirmed">-@km.PhanTramGiam%</span></td>
+                                <td>@km.KhungGio?.TenKhungGio</td>
+                                <td>@km.NgayBatDau.ToString("dd/MM/yy")</td>
+                                <td>@km.NgayKetThuc.ToString("dd/MM/yy")</td>
+                                <td>@(km.TrangThai ? "✅" : "❌")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>

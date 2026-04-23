@@ -1,0 +1,121 @@
+@model VeDatPhongViewModel
+@{
+    ViewData["Title"] = "Vé đặt phòng";
+    Layout = null; // Standalone ticket page
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vé Đặt Phòng - @Model.DatPhong?.MaDatPhong</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body class="ticket-page-body">
+
+@if (!Model.HopLe)
+{
+    <div class="ticket-error-card">
+        <i class="bi bi-shield-x" style="font-size:4rem;color:#ff5a5f;"></i>
+        <h2>Không thể truy cập</h2>
+        <p>@Model.LoiThongBao</p>
+        <a href="/" class="btn-primary-custom">Về trang chủ</a>
+    </div>
+}
+else
+{
+    <div class="ticket-full-card" id="ticketCard">
+        <div class="ticket-header">
+            <h2><i class="bi bi-house-heart-fill"></i> HomeStay Booking</h2>
+            <span class="ticket-code">@Model.DatPhong.MaDatPhong</span>
+        </div>
+
+        <div class="ticket-qr">
+            @if (!string.IsNullOrEmpty(Model.QrCodeBase64))
+            {
+                <img src="data:image/png;base64,@Model.QrCodeBase64" alt="QR Code" />
+            }
+        </div>
+
+        <div class="ticket-details">
+            <div class="ticket-row">
+                <span class="ticket-label"><i class="bi bi-house"></i> Phòng</span>
+                <span class="ticket-value">@Model.Phong.TenPhong</span>
+            </div>
+            <div class="ticket-row">
+                <span class="ticket-label"><i class="bi bi-geo-alt"></i> Địa chỉ</span>
+                <span class="ticket-value">@Model.Phong.DiaChi</span>
+            </div>
+            <div class="ticket-row highlight">
+                <span class="ticket-label"><i class="bi bi-key-fill"></i> Mã mở cửa</span>
+                <span class="ticket-value code-display">@Model.DatPhong.MaMoCua</span>
+            </div>
+            <div class="ticket-row">
+                <span class="ticket-label"><i class="bi bi-box-arrow-in-right"></i> Nhận phòng</span>
+                <span class="ticket-value">@Model.DatPhong.ThoiGianNhan?.ToString("HH:mm dd-MM-yyyy")</span>
+            </div>
+            <div class="ticket-row">
+                <span class="ticket-label"><i class="bi bi-box-arrow-right"></i> Trả phòng</span>
+                <span class="ticket-value">@Model.DatPhong.ThoiGianTra?.ToString("HH:mm dd-MM-yyyy")</span>
+            </div>
+            <div class="ticket-row">
+                <span class="ticket-label"><i class="bi bi-clock"></i> Khung giờ</span>
+                <span class="ticket-value">
+                    @foreach (var ct in Model.DanhSachChiTiet)
+                    {
+                        <span class="badge-slot">@ct.KhungGio?.BieuTuong @ct.KhungGio?.TenKhungGio</span>
+                    }
+                </span>
+            </div>
+            <div class="ticket-row">
+                <span class="ticket-label"><i class="bi bi-wifi"></i> WiFi</span>
+                <span class="ticket-value">@Model.CaiDat.GetValueOrDefault("TenWifi","") / @Model.CaiDat.GetValueOrDefault("MatKhauWifi","")</span>
+            </div>
+            <div class="ticket-row">
+                <span class="ticket-label"><i class="bi bi-telephone"></i> Hotline</span>
+                <span class="ticket-value">@Model.CaiDat.GetValueOrDefault("Hotline","")</span>
+            </div>
+        </div>
+
+        <div class="ticket-total">
+            <span>Tổng tiền</span>
+            <span>@Model.DatPhong.TongTien.ToString("N0")đ</span>
+        </div>
+
+        @if (Model.DatPhong.ThoiGianTra.HasValue)
+        {
+            <div class="ticket-countdown" data-end="@Model.DatPhong.ThoiGianTra.Value.ToString("yyyy-MM-ddTHH:mm:ss")">
+                <i class="bi bi-hourglass-split"></i>
+                <span id="countdown">Đang tính...</span>
+            </div>
+        }
+    </div>
+
+    <div style="text-align:center;margin-top:1rem;">
+        <a href="/DatPhong/TaiVePDF/@Model.DatPhong.MaDatPhong?token=@Model.DatPhong.Token" class="btn-primary-custom" style="text-decoration:none;">
+            <i class="bi bi-file-earmark-pdf"></i> Tải vé (PDF)
+        </a>
+    </div>
+}
+
+<script>
+var countdownEl = document.getElementById('countdown');
+var endEl = document.querySelector('.ticket-countdown');
+if (endEl) {
+    var endTime = new Date(endEl.dataset.end).getTime();
+    setInterval(function() {
+        var now = new Date().getTime();
+        var diff = endTime - now;
+        if (diff <= 0) { countdownEl.textContent = 'Đã hết thời gian sử dụng'; return; }
+        var h = Math.floor(diff / 3600000);
+        var m = Math.floor((diff % 3600000) / 60000);
+        var s = Math.floor((diff % 60000) / 1000);
+        countdownEl.textContent = 'Còn ' + h + 'h ' + m + 'm ' + s + 's';
+    }, 1000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+@model List<Phong>
+@{
+    ViewData["Title"] = "Danh sách phòng";
+    var danhSachKhuVuc = ViewBag.DanhSachKhuVuc as List<KhuVuc>;
+    var danhSachLoaiPhong = ViewBag.DanhSachLoaiPhong as List<LoaiPhong>;
+}
+
+<section class="page-header">
+    <div class="container-custom">
+        <h1><i class="bi bi-door-open-fill"></i> Danh sách phòng</h1>
+        <p>Tìm phòng homestay phù hợp với nhu cầu của bạn</p>
+    </div>
+</section>
+
+<section class="section-rooms">
+    <div class="container-custom">
+        <!-- Filters -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label><i class="bi bi-geo-alt"></i> Khu vực</label>
+                <select id="filterKhuVuc" class="filter-select" onchange="applyFilter()">
+                    <option value="">Tất cả khu vực</option>
+                    @if (danhSachKhuVuc != null)
+                    {
+                        @foreach (var kv in danhSachKhuVuc)
+                        {
+                            var selKv = ViewBag.MaKhuVuc != null && (int)ViewBag.MaKhuVuc == kv.Id;
+                            if (selKv) { <option value="@kv.Id" selected>@kv.TenKhuVuc</option> }
+                            else { <option value="@kv.Id">@kv.TenKhuVuc</option> }
+                        }
+                    }
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="bi bi-house"></i> Loại phòng</label>
+                <select id="filterLoaiPhong" class="filter-select" onchange="applyFilter()">
+                    <option value="">Tất cả loại</option>
+                    @if (danhSachLoaiPhong != null)
+                    {
+                        @foreach (var lp in danhSachLoaiPhong)
+                        {
+                            var selLp = ViewBag.MaLoaiPhong != null && (int)ViewBag.MaLoaiPhong == lp.Id;
+                            if (selLp) { <option value="@lp.Id" selected>@lp.TenLoaiPhong</option> }
+                            else { <option value="@lp.Id">@lp.TenLoaiPhong</option> }
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+        <!-- Room Cards -->
+        <div class="rooms-grid">
+            @foreach (var phong in Model)
+            {
+                var imgList = new List<string>();
+                if (!string.IsNullOrEmpty(phong.HinhAnh)) {
+                    try { imgList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(phong.HinhAnh) ?? new(); } catch {}
+                    if (!imgList.Any() && phong.HinhAnh.StartsWith("/")) imgList.Add(phong.HinhAnh);
+                }
+                var firstImg = imgList.FirstOrDefault();
+                var giaMin = phong.DanhSachGia?.Min(g => g.Gia) ?? 0;
+                <div class="room-card">
+                    <div class="room-card-image">
+                        @if (firstImg != null)
+                        {
+                            <img src="@firstImg" alt="@phong.TenPhong" style="width:100%;height:100%;object-fit:cover;" />
+                        }
+                        else
+                        {
+                            <div class="room-card-placeholder"><i class="bi bi-house"></i></div>
+                        }
+                        <span class="room-badge">@phong.LoaiPhong?.TenLoaiPhong</span>
+                        <div class="room-card-overlay">
+                            <a href="/Phong/ChiTiet/@phong.Id" class="btn-view">Xem chi tiết</a>
+                        </div>
+                    </div>
+                    <div class="room-card-body">
+                        <h3 class="room-name">@phong.TenPhong</h3>
+                        <p class="room-location"><i class="bi bi-geo-alt"></i> @phong.KhuVuc?.TenKhuVuc - @phong.DiaChi</p>
+                        <div class="room-features">
+                            <span><i class="bi bi-arrows-fullscreen"></i> @phong.DienTich m²</span>
+                            <span><i class="bi bi-people"></i> @phong.SoNguoiToiDa người</span>
+                        </div>
+                        <div class="room-card-footer">
+                            <div class="room-price">
+                                <span class="price-label">Từ</span>
+                                <span class="price-value">@giaMin.ToString("N0")đ</span>
+                                <span class="price-unit">/khung giờ</span>
+                            </div>
+                            <a href="/Phong/ChiTiet/@phong.Id" class="btn-book"><i class="bi bi-eye"></i> Xem chi tiết</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="empty-state">
+                <i class="bi bi-emoji-frown"></i>
+                <h3>Không tìm thấy phòng nào</h3>
+                <p>Hãy thử thay đổi bộ lọc</p>
+            </div>
+        }
+
+        @{
+            int currentPage = ViewBag.CurrentPage ?? 1;
+            int totalPages = ViewBag.TotalPages ?? 1;
+        }
+        @if (totalPages > 1)
+        {
+            <nav class="pagination-wrap">
+                @if (currentPage > 1)
+                {
+                    <a href="javascript:goToPage(@(currentPage-1))" class="page-btn"><i class="bi bi-chevron-left"></i></a>
+                }
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <a href="javascript:goToPage(@i)" class="page-btn @(i == currentPage ? "page-active" : "")">@i</a>
+                }
+                @if (currentPage < totalPages)
+                {
+                    <a href="javascript:goToPage(@(currentPage+1))" class="page-btn"><i class="bi bi-chevron-right"></i></a>
+                }
+            </nav>
+        }
+    </div>
+</section>
+
+<style>
+    .pagination-wrap {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+    .page-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: var(--bg-card);
+        color: var(--text);
+        border: 2px solid var(--border);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all .2s;
+        font-family: var(--font);
+    }
+    .page-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .page-active {
+        background: var(--primary) !important;
+        border-color: var(--primary) !important;
+        color: #fff !important;
+    }
+</style>
+
+@section Scripts {
+<script>
+function applyFilter() {
+    var kv = document.getElementById('filterKhuVuc').value;
+    var lp = document.getElementById('filterLoaiPhong').value;
+    var url = '/Phong?';
+    if (kv) url += 'maKhuVuc=' + kv + '&';
+    if (lp) url += 'maLoaiPhong=' + lp;
+    window.location.href = url;
+}
+function goToPage(p) {
+    var kv = document.getElementById('filterKhuVuc').value;
+    var lp = document.getElementById('filterLoaiPhong').value;
+    var url = '/Phong?page=' + p;
+    if (kv) url += '&maKhuVuc=' + kv;
+    if (lp) url += '&maLoaiPhong=' + lp;
+    window.location.href = url;
+}
+</script>
+}

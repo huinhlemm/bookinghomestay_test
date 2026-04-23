@@ -1,0 +1,55 @@
+@{
+    ViewData["Title"] = "Đăng ký tài khoản";
+}
+
+<section class="login-section">
+    <div class="login-card">
+        <div class="login-header">
+            <i class="bi bi-person-plus-fill"></i>
+            <h1>Đăng ký tài khoản</h1>
+            <p>Tạo tài khoản mới để quản lý hệ thống</p>
+        </div>
+
+        @if (ViewBag.Loi != null)
+        {
+            <div class="alert-error">
+                <i class="bi bi-exclamation-circle-fill"></i> @ViewBag.Loi
+            </div>
+        }
+
+        <form method="post" asp-action="DangKy">
+            @Html.AntiForgeryToken()
+            <div class="form-group-custom">
+                <label><i class="bi bi-person-fill"></i> Họ tên *</label>
+                <input type="text" name="hoTen" class="input-custom" required placeholder="Nguyễn Văn A" autofocus />
+            </div>
+            <div class="form-group-custom">
+                <label><i class="bi bi-person-badge-fill"></i> Tên đăng nhập *</label>
+                <input type="text" name="tenDangNhap" class="input-custom" required placeholder="tendangnhap" />
+            </div>
+            <div class="form-group-custom">
+                <label><i class="bi bi-lock-fill"></i> Mật khẩu * <small>(tối thiểu 6 ký tự)</small></label>
+                <input type="password" name="matKhau" class="input-custom" required placeholder="••••••••" minlength="6" />
+            </div>
+            <div class="form-group-custom">
+                <label><i class="bi bi-lock-fill"></i> Xác nhận mật khẩu *</label>
+                <input type="password" name="xacNhanMatKhau" class="input-custom" required placeholder="••••••••" minlength="6" />
+            </div>
+            <div class="form-group-custom">
+                <label><i class="bi bi-envelope-fill"></i> Email</label>
+                <input type="email" name="email" class="input-custom" placeholder="email@example.com" />
+            </div>
+            <div class="form-group-custom">
+                <label><i class="bi bi-telephone-fill"></i> Số điện thoại</label>
+                <input type="tel" name="soDienThoai" class="input-custom" placeholder="0909 123 456" />
+            </div>
+            <button type="submit" class="btn-primary-custom btn-block">
+                <i class="bi bi-person-plus-fill"></i> Đăng ký
+            </button>
+        </form>
+
+        <div class="login-footer">
+            <a href="/TaiKhoan/DangNhap"><i class="bi bi-arrow-left"></i> Đã có tài khoản? Đăng nhập</a>
+        </div>
+    </div>
+</section>

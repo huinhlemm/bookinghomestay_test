@@ -1,0 +1,78 @@
+@{
+    ViewData["Title"] = "Tra cứu đặt phòng";
+    var ketQua = ViewBag.KetQua as DatPhong;
+}
+
+<section class="page-header">
+    <div class="container-custom">
+        <h1><i class="bi bi-search"></i> Tra cứu đặt phòng</h1>
+        <p>Nhập mã đặt phòng hoặc số điện thoại</p>
+    </div>
+</section>
+
+<section class="tracuu-section">
+    <div class="container-custom">
+        <div class="tracuu-card">
+            <form method="get" asp-action="TraCuu">
+                <div class="tracuu-form">
+                    <input type="text" name="ma" class="input-custom input-lg" 
+                           placeholder="Nhập mã đặt phòng (VD: DP-20260421-001) hoặc SĐT..." 
+                           value="@ViewBag.Ma" required />
+                    <button type="submit" class="btn-primary-custom btn-lg">
+                        <i class="bi bi-search"></i> Tra cứu
+                    </button>
+                </div>
+            </form>
+
+            @if (ketQua != null)
+            {
+                <div class="tracuu-result">
+                    <h3><i class="bi bi-check-circle-fill"></i> Kết quả tra cứu</h3>
+                    <div class="tracuu-info">
+                        <div class="ticket-row">
+                            <span class="ticket-label">Mã đặt phòng</span>
+                            <span class="ticket-value"><strong>@ketQua.MaDatPhong</strong></span>
+                        </div>
+                        <div class="ticket-row">
+                            <span class="ticket-label">Phòng</span>
+                            <span class="ticket-value">@ketQua.Phong?.TenPhong</span>
+                        </div>
+                        <div class="ticket-row">
+                            <span class="ticket-label">Khách</span>
+                            <span class="ticket-value">@ketQua.TenKhach</span>
+                        </div>
+                        <div class="ticket-row">
+                            <span class="ticket-label">Ngày</span>
+                            <span class="ticket-value">@ketQua.NgayNhanPhong.ToString("dd-MM-yyyy")</span>
+                        </div>
+                        <div class="ticket-row">
+                            <span class="ticket-label">Trạng thái</span>
+                            <span class="ticket-value">
+                                @switch (ketQua.TrangThai)
+                                {
+                                    case "ChoXacNhan": <span class="status-badge status-pending">Chờ xác nhận</span> break;
+                                    case "DaXacNhan": <span class="status-badge status-confirmed">Đã xác nhận</span> break;
+                                    case "DaNhanPhong": <span class="status-badge status-checkin">Đã nhận phòng</span> break;
+                                    case "HoanThanh": <span class="status-badge status-done">Hoàn thành</span> break;
+                                    case "DaHuy": <span class="status-badge status-cancel">Đã hủy</span> break;
+                                }
+                            </span>
+                        </div>
+                        <div class="ticket-row">
+                            <span class="ticket-label">Tổng tiền</span>
+                            <span class="ticket-value"><strong>@ketQua.TongTien.ToString("N0")đ</strong></span>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (ViewBag.Ma != null)
+            {
+                <div class="empty-state" style="margin-top:2rem;">
+                    <i class="bi bi-emoji-frown"></i>
+                    <h3>Không tìm thấy</h3>
+                    <p>Không tìm thấy đặt phòng với thông tin "@ViewBag.Ma"</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>

@@ -1,0 +1,157 @@
+@model DatPhong
+@{
+    ViewData["Title"] = "Chi tiết đặt phòng";
+    var qrBase64 = ViewBag.QrCodeBase64 as string;
+}
+
+<section class="admin-section">
+    <div class="container-custom">
+        <div class="admin-header">
+            <h1><i class="bi bi-receipt"></i> Chi tiết đặt phòng</h1>
+            <div class="admin-nav">
+                <a href="/QuanTri" class="admin-nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                <a href="/QuanTri/DanhSachDatPhong" class="admin-nav-link active"><i class="bi bi-calendar-check"></i> Đặt phòng</a>
+                <a href="/QuanTri/QuanLyTaiKhoan" class="admin-nav-link"><i class="bi bi-people"></i> Tài khoản</a>
+                <a href="/TaiKhoan/DangXuat" class="admin-nav-link logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+            </div>
+        </div>
+
+        <div class="detail-grid">
+            <div class="admin-card">
+                <h3><i class="bi bi-info-circle-fill"></i> Thông tin đặt phòng</h3>
+                <div class="ticket-details">
+                    <div class="ticket-row"><span class="ticket-label">Mã ĐP</span><span class="ticket-value"><strong>@Model.MaDatPhong</strong></span></div>
+                    <div class="ticket-row"><span class="ticket-label">Khách</span><span class="ticket-value">@Model.TenKhach</span></div>
+                    <div class="ticket-row"><span class="ticket-label">SĐT</span><span class="ticket-value">@Model.SoDienThoai</span></div>
+                    <div class="ticket-row"><span class="ticket-label">Phòng</span><span class="ticket-value">@Model.Phong?.TenPhong</span></div>
+                    <div class="ticket-row"><span class="ticket-label">Địa chỉ</span><span class="ticket-value">@Model.Phong?.DiaChi</span></div>
+                    <div class="ticket-row"><span class="ticket-label">Ngày nhận</span><span class="ticket-value">@Model.NgayNhanPhong.ToString("dd-MM-yyyy")</span></div>
+                    <div class="ticket-row"><span class="ticket-label">Nhận phòng</span><span class="ticket-value">@Model.ThoiGianNhan?.ToString("HH:mm dd-MM-yyyy")</span></div>
+                    <div class="ticket-row"><span class="ticket-label">Trả phòng</span><span class="ticket-value">@Model.ThoiGianTra?.ToString("HH:mm dd-MM-yyyy")</span></div>
+                    <div class="ticket-row"><span class="ticket-label">Khung giờ</span>
+                        <span class="ticket-value">
+                            @if (Model.DanhSachChiTiet != null)
+                            {
+                                foreach (var ct in Model.DanhSachChiTiet)
+                                {
+                                    <span class="badge-slot">@ct.KhungGio?.BieuTuong @ct.KhungGio?.TenKhungGio - @ct.GiaApDung.ToString("N0")đ</span>
+                                }
+                            }
+                        </span>
+                    </div>
+                    <div class="ticket-row highlight">
+                        <span class="ticket-label">🔐 Mã mở cửa</span>
+                        <span class="ticket-value">
+                            <span style="font-size:22px;font-weight:bold;letter-spacing:6px;color:var(--primary);">@Model.MaMoCua</span>
+                        </span>
+                    </div>
+                    <div class="ticket-row"><span class="ticket-label">Nguồn đặt</span><span class="ticket-value">@Model.NguonDat</span></div>
+                    <div class="ticket-row"><span class="ticket-label">Email</span><span class="ticket-value">@Model.Email</span></div>
+                    <div class="ticket-row">
+                        <span class="ticket-label"><i class="bi bi-receipt"></i> Bill thanh toán</span>
+                        <span class="ticket-value">
+                            @if (!string.IsNullOrEmpty(Model.MinhChungThanhToan))
+                            {
+                                <a href="@Model.MinhChungThanhToan" target="_blank" style="display:inline-flex;align-items:center;gap:6px;color:#2e7d32;font-weight:600;">
+                                    <img src="@Model.MinhChungThanhToan" alt="Bill" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:2px solid #e0e0e0;" />
+                                    <span>Xem ảnh <i class="bi bi-box-arrow-up-right"></i></span>
+                                </a>
+                            }
+                            else
+                            {
+                                <span style="color:#999;font-style:italic;">Chưa có</span>
+                            }
+                        </span>
+                    </div>
+                    <div class="ticket-row">
+                        <span class="ticket-label"><i class="bi bi-person-badge-fill"></i> CCCD mặt trước</span>
+                        <span class="ticket-value">
+                            @if (!string.IsNullOrEmpty(Model.CccdMatTruoc))
+                            {
+                                <a href="@Model.CccdMatTruoc" target="_blank" style="display:inline-flex;align-items:center;gap:6px;color:#667eea;font-weight:600;">
+                                    <img src="@Model.CccdMatTruoc" alt="CCCD trước" style="width:120px;height:75px;object-fit:cover;border-radius:8px;border:2px solid #e0e0e0;" />
+                                    <span>Xem <i class="bi bi-box-arrow-up-right"></i></span>
+                                </a>
+                            }
+                            else { <span style="color:#999;font-style:italic;">Chưa có</span> }
+                        </span>
+                    </div>
+                    <div class="ticket-row">
+                        <span class="ticket-label"><i class="bi bi-person-badge"></i> CCCD mặt sau</span>
+                        <span class="ticket-value">
+                            @if (!string.IsNullOrEmpty(Model.CccdMatSau))
+                            {
+                                <a href="@Model.CccdMatSau" target="_blank" style="display:inline-flex;align-items:center;gap:6px;color:#667eea;font-weight:600;">
+                                    <img src="@Model.CccdMatSau" alt="CCCD sau" style="width:120px;height:75px;object-fit:cover;border-radius:8px;border:2px solid #e0e0e0;" />
+                                    <span>Xem <i class="bi bi-box-arrow-up-right"></i></span>
+                                </a>
+                            }
+                            else { <span style="color:#999;font-style:italic;">Chưa có</span> }
+                        </span>
+                    </div>
+                    <div class="ticket-row">
+                        <span class="ticket-label">Trạng thái</span>
+                        <span class="ticket-value">
+                            @switch (Model.TrangThai)
+                            {
+                                case "ChoXacNhan": <span class="status-badge status-pending">Chờ xác nhận</span> break;
+                                case "DaXacNhan": <span class="status-badge status-confirmed">Đã xác nhận</span> break;
+                                case "DaNhanPhong": <span class="status-badge status-checkin">Đã nhận phòng</span> break;
+                                case "HoanThanh": <span class="status-badge status-done">Hoàn thành</span> break;
+                                case "DaHuy": <span class="status-badge status-cancel">Đã hủy</span> break;
+                                case "DaHetHan": <span class="status-badge" style="background:rgba(158,158,158,0.15);color:#9e9e9e;">⏰ Đã hết hạn</span> break;
+                            }
+                        </span>
+                    </div>
+                </div>
+                <div class="ticket-total">
+                    <span>Tổng tiền</span>
+                    <span>@Model.TongTien.ToString("N0")đ</span>
+                </div>
+
+                <div class="form-actions" style="margin-top:1rem;">
+                    @if (Model.TrangThai == "ChoXacNhan")
+                    {
+                        <button onclick="xacNhan(@Model.Id)" class="btn-primary-custom"><i class="bi bi-check-circle"></i> Xác nhận</button>
+                        <button onclick="huyDon(@Model.Id)" class="btn-outline-custom" style="color:#ff5a5f;border-color:#ff5a5f;"><i class="bi bi-x-circle"></i> Hủy</button>
+                    }
+                    <a href="/QuanTri/DanhSachDatPhong" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Quay lại</a>
+                </div>
+            </div>
+
+            <div class="admin-card" style="text-align:center;">
+                <h3><i class="bi bi-qr-code"></i> QR Code</h3>
+                @if (!string.IsNullOrEmpty(qrBase64))
+                {
+                    <img src="data:image/png;base64,@qrBase64" alt="QR Code" style="max-width:250px;border-radius:12px;" />
+                    <p style="margin-top:0.5rem;color:var(--text-secondary);">Quét để xem vé điện tử</p>
+                }
+                <div style="margin-top:1rem;">
+                    <a href="/DatPhong/TaiVePDF/@Model.MaDatPhong?token=@Model.Token" class="btn-primary-custom" style="text-decoration:none;">
+                        <i class="bi bi-file-earmark-pdf"></i> Tải vé (PDF)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+function xacNhan(id) {
+    showConfirm('✅', 'Xác nhận đặt phòng', 'Bạn có chắc muốn xác nhận đơn đặt phòng này?', function() {
+        fetch('/QuanTri/XacNhanDatPhong', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'id=' + id })
+            .then(r => r.json())
+            .then(d => { if (d.success) { showSuccess('Đã xác nhận!', 'Mã mở cửa: <strong>' + d.maMoCua + '</strong>'); setTimeout(function(){ location.reload(); }, 1500); } });
+    });
+}
+function huyDon(id) {
+    showConfirm('🗑️', 'Hủy đặt phòng', 'Bạn có chắc muốn hủy đơn đặt phòng này?', function() {
+        fetch('/QuanTri/HuyDatPhong', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'id=' + id })
+            .then(r => r.json())
+            .then(d => { if (d.success) { showSuccess('Đã hủy!', 'Đơn đặt phòng đã được hủy.'); setTimeout(function(){ location.reload(); }, 1500); } });
+    });
+}
+</script>
+}
+

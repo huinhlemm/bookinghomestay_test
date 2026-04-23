@@ -1,0 +1,212 @@
+@model List<CaiDatHeThong>
+@{ ViewData["Title"] = "Cài đặt hệ thống"; }
+
+<section class="admin-section">
+    <div class="container-custom">
+        <div class="admin-header">
+            <h1><i class="bi bi-gear-fill"></i> Cài đặt hệ thống</h1>
+            <div class="admin-nav">
+                <a href="/QuanTri" class="admin-nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                <a href="/QuanTri/DanhSachPhong" class="admin-nav-link"><i class="bi bi-house"></i> Phòng</a>
+                <a href="/QuanTri/DanhSachKhungGio" class="admin-nav-link"><i class="bi bi-clock"></i> Khung giờ</a>
+                <a href="/QuanTri/DanhSachDatPhong" class="admin-nav-link"><i class="bi bi-calendar-check"></i> Đặt phòng</a>
+                <a href="/QuanTri/DanhSachKhuVuc" class="admin-nav-link"><i class="bi bi-geo-alt"></i> Khu vực</a>
+                <a href="/QuanTri/GiaVaKhuyenMai" class="admin-nav-link"><i class="bi bi-tag"></i> Giá & KM</a>
+                <a href="/QuanTri/CaiDat" class="admin-nav-link active"><i class="bi bi-gear"></i> Cài đặt</a>
+                <a href="/QuanTri/QuanLyTaiKhoan" class="admin-nav-link"><i class="bi bi-people"></i> Tài khoản</a>
+                <a href="/TaiKhoan/DangXuat" class="admin-nav-link logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+            </div>
+        </div>
+
+        <div class="admin-card">
+            <form method="post" asp-action="LuuCaiDat">
+                @Html.AntiForgeryToken()
+                @{
+                    var nhomHienTai = "";
+                    var nhomTen = new Dictionary<string, string> {
+                        {"ChungChung","⚙️ Chung"},{"LienHe","📞 Liên hệ"},{"GiaoDien","🎨 Giao diện"},{"NoiDung","📝 Nội dung"}
+                    };
+                }
+                @foreach (var cd in Model)
+                {
+                    if (cd.NhomCaiDat != nhomHienTai)
+                    {
+                        nhomHienTai = cd.NhomCaiDat;
+                        <h3 class="settings-group-title">@nhomTen.GetValueOrDefault(nhomHienTai, nhomHienTai)</h3>
+                    }
+                    <div class="form-group-custom settings-row">
+                        <label>
+                            <strong>@cd.MoTa</strong>
+                        </label>
+                        @if (cd.TenCaiDat == "NoiQuy" || cd.TenCaiDat == "ChinhSach" || cd.TenCaiDat == "BannerTrangChu" || cd.TenCaiDat == "ThongTinChuyenKhoan")
+                        {
+                            <textarea name="caiDatValues[@cd.Id]" class="input-custom" rows="3">@cd.GiaTri</textarea>
+                        }
+                        else if (cd.TenCaiDat == "MauChuDao" || cd.TenCaiDat == "MauPhu")
+                        {
+                            <div class="color-input-wrap">
+                                <input type="color" value="@cd.GiaTri" onchange="this.nextElementSibling.value=this.value" />
+                                <input type="text" name="caiDatValues[@cd.Id]" class="input-custom" value="@cd.GiaTri" />
+                            </div>
+                        }
+                        else if (cd.TenCaiDat == "AdminPassword")
+                        {
+                            <input type="password" name="caiDatValues[@cd.Id]" class="input-custom" value="@cd.GiaTri" />
+                        }
+                        else if (cd.TenCaiDat == "QrThanhToan" || cd.TenCaiDat == "Logo" || cd.TenCaiDat == "HinhNen")
+                        {
+                            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                                <input type="hidden" name="caiDatValues[@cd.Id]" id="imgVal-@cd.Id" value="@cd.GiaTri" />
+                                @if (!string.IsNullOrEmpty(cd.GiaTri))
+                                {
+                                    <img src="@cd.GiaTri" id="imgPreview-@cd.Id" alt="Preview" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:2px solid #ddd;" />
+                                }
+                                else
+                                {
+                                    <div id="imgPreview-@cd.Id" style="width:80px;height:80px;border-radius:10px;border:2px dashed #ddd;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:24px;">
+                                        <i class="bi bi-image"></i>
+                                    </div>
+                                }
+                                <label style="cursor:pointer;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
+                                    <i class="bi bi-cloud-arrow-up"></i> Tải ảnh lên
+                                    <input type="file" accept="image/*" style="display:none;" onchange="uploadHinhCaiDat(@cd.Id, this)" />
+                                </label>
+                                <span id="imgStatus-@cd.Id" style="font-size:12px;color:#999;"></span>
+                            </div>
+                        }
+                        else if (cd.TenCaiDat == "BannerImages")
+                        {
+                            <input type="hidden" name="caiDatValues[@cd.Id]" id="bannerVal-@cd.Id" value="@cd.GiaTri" />
+                            <div style="margin-bottom:10px;">
+                                <label style="cursor:pointer;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
+                                    <i class="bi bi-images"></i> Thêm ảnh banner
+                                    <input type="file" accept="image/*" multiple style="display:none;" onchange="uploadBannerImages(@cd.Id, this)" />
+                                </label>
+                                <span id="bannerStatus-@cd.Id" style="font-size:12px;color:#999;margin-left:8px;"></span>
+                            </div>
+                            <div id="bannerGallery-@cd.Id" style="display:flex;gap:10px;flex-wrap:wrap;">
+                                @{
+                                    var bannerList = new List<string>();
+                                    if (!string.IsNullOrEmpty(cd.GiaTri)) {
+                                        try { bannerList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(cd.GiaTri) ?? new(); } catch {}
+                                    }
+                                }
+                                @foreach (var img in bannerList)
+                                {
+                                    <div style="position:relative;">
+                                        <img src="@img" style="width:120px;height:75px;object-fit:cover;border-radius:8px;border:2px solid var(--border);" />
+                                        <button type="button" onclick="xoaBannerImg(@cd.Id, '@img')" style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:#e53935;color:#fff;border:none;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <input type="text" name="caiDatValues[@cd.Id]" class="input-custom" value="@cd.GiaTri" />
+                        }
+                    </div>
+                }
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-circle-fill"></i> Lưu cài đặt</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+function uploadHinhCaiDat(id, input) {
+    var file = input.files[0];
+    if (!file) return;
+    var status = document.getElementById('imgStatus-' + id);
+    status.textContent = 'Đang tải lên...';
+    status.style.color = '#667eea';
+
+    var formData = new FormData();
+    formData.append('id', id);
+    formData.append('file', file);
+
+    fetch('/QuanTri/UploadHinhCaiDat', { method: 'POST', body: formData })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                document.getElementById('imgVal-' + id).value = d.filePath;
+                var preview = document.getElementById('imgPreview-' + id);
+                if (preview.tagName === 'IMG') {
+                    preview.src = d.filePath;
+                } else {
+                    preview.outerHTML = '<img src="' + d.filePath + '" id="imgPreview-' + id + '" alt="Preview" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:2px solid #ddd;" />';
+                }
+                status.textContent = '✅ Đã tải lên!';
+                status.style.color = '#2e7d32';
+            } else {
+                status.textContent = '❌ Lỗi: ' + (d.message || 'Thử lại');
+                status.style.color = '#e53935';
+            }
+        })
+        .catch(function() {
+            status.textContent = '❌ Lỗi kết nối';
+            status.style.color = '#e53935';
+        });
+}
+function uploadBannerImages(id, input) {
+    var files = input.files;
+    if (!files.length) return;
+    var status = document.getElementById('bannerStatus-' + id);
+    status.textContent = 'Đang tải ' + files.length + ' ảnh...';
+    status.style.color = '#667eea';
+    
+    var currentVal = document.getElementById('bannerVal-' + id).value;
+    var images = [];
+    try { images = JSON.parse(currentVal) || []; } catch(e) { images = []; }
+    
+    var uploaded = 0;
+    var total = files.length;
+    
+    for (var i = 0; i < files.length; i++) {
+        (function(file) {
+            var formData = new FormData();
+            formData.append('file', file);
+            fetch('/QuanTri/UploadHinhAnh', { method: 'POST', body: formData })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    uploaded++;
+                    if (d.success) {
+                        images.push(d.filePath);
+                        var gallery = document.getElementById('bannerGallery-' + id);
+                        var div = document.createElement('div');
+                        div.style.position = 'relative';
+                        div.innerHTML = '<img src="' + d.filePath + '" style="width:120px;height:75px;object-fit:cover;border-radius:8px;border:2px solid var(--border);" />' +
+                            '<button type="button" onclick="xoaBannerImg(' + id + ', \'' + d.filePath + '\')" style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:#e53935;color:#fff;border:none;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>';
+                        gallery.appendChild(div);
+                    }
+                    if (uploaded === total) {
+                        document.getElementById('bannerVal-' + id).value = JSON.stringify(images);
+                        status.textContent = '✅ Đã tải ' + total + ' ảnh!';
+                        status.style.color = '#2e7d32';
+                    }
+                });
+        })(files[i]);
+    }
+    input.value = '';
+}
+
+function xoaBannerImg(id, imgPath) {
+    var currentVal = document.getElementById('bannerVal-' + id).value;
+    var images = [];
+    try { images = JSON.parse(currentVal) || []; } catch(e) { images = []; }
+    images = images.filter(function(i) { return i !== imgPath; });
+    document.getElementById('bannerVal-' + id).value = JSON.stringify(images);
+    
+    var gallery = document.getElementById('bannerGallery-' + id);
+    var imgs = gallery.querySelectorAll('img');
+    imgs.forEach(function(img) {
+        if (img.src.includes(imgPath.replace(/^\//,''))) {
+            img.parentElement.remove();
+        }
+    });
+    showSuccess('Đã xóa!', 'Nhấn Lưu cài đặt để áp dụng.');
+}
+</script>
+}

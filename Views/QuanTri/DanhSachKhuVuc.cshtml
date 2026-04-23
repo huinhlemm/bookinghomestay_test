@@ -1,0 +1,101 @@
+@model List<KhuVuc>
+@{ ViewData["Title"] = "Quản lý khu vực"; }
+
+<section class="admin-section">
+    <div class="container-custom">
+        <div class="admin-header">
+            <h1><i class="bi bi-geo-alt-fill"></i> Quản lý khu vực</h1>
+            <div class="admin-nav">
+                <a href="/QuanTri" class="admin-nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                <a href="/QuanTri/DanhSachPhong" class="admin-nav-link"><i class="bi bi-house"></i> Phòng</a>
+                <a href="/QuanTri/DanhSachKhungGio" class="admin-nav-link"><i class="bi bi-clock"></i> Khung giờ</a>
+                <a href="/QuanTri/DanhSachDatPhong" class="admin-nav-link"><i class="bi bi-calendar-check"></i> Đặt phòng</a>
+                <a href="/QuanTri/DanhSachKhuVuc" class="admin-nav-link active"><i class="bi bi-geo-alt"></i> Khu vực</a>
+                <a href="/QuanTri/GiaVaKhuyenMai" class="admin-nav-link"><i class="bi bi-tag"></i> Giá & KM</a>
+                <a href="/QuanTri/CaiDat" class="admin-nav-link"><i class="bi bi-gear"></i> Cài đặt</a>
+                <a href="/QuanTri/QuanLyTaiKhoan" class="admin-nav-link"><i class="bi bi-people"></i> Tài khoản</a>
+                <a href="/TaiKhoan/DangXuat" class="admin-nav-link logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+            </div>
+        </div>
+        <div class="admin-card">
+            <div class="card-header-flex">
+                <h3>Danh sách khu vực</h3>
+                <button onclick="document.getElementById('formThem').style.display='block'" class="btn-primary-custom btn-sm"><i class="bi bi-plus-circle"></i> Thêm</button>
+            </div>
+            <div id="formThem" style="display:none;" class="admin-form-card">
+                <form method="post" asp-action="ThemKhuVuc">
+                    @Html.AntiForgeryToken()
+                    <div class="form-grid-2">
+                        <div class="form-group-custom"><label>Tên khu vực *</label><input type="text" name="TenKhuVuc" class="input-custom" required /></div>
+                        <div class="form-group-custom"><label>Thành phố</label><input type="text" name="ThanhPho" class="input-custom" /></div>
+                        <div class="form-group-custom"><label>Quận/Huyện</label><input type="text" name="QuanHuyen" class="input-custom" /></div>
+                        <div class="form-group-custom">
+                            <label>Hình ảnh</label>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <input type="hidden" name="HinhAnh" id="hinhAnhInput" />
+                                <img id="hinhAnhPreview" src="" style="display:none;width:60px;height:60px;object-fit:cover;border-radius:8px;" />
+                                <label style="cursor:pointer;background:#f8f9fa;border:1px solid #dfe6e9;padding:8px 12px;border-radius:8px;font-size:13px;">
+                                    <i class="bi bi-upload"></i> Chọn ảnh
+                                    <input type="file" accept="image/*" style="display:none;" onchange="uploadImage(this, 'hinhAnhInput', 'hinhAnhPreview', 'uploadStatusKV')" />
+                                </label>
+                                <span id="uploadStatusKV" style="font-size:12px;color:#666;"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group-custom"><label>Mô tả</label><textarea name="MoTa" class="input-custom" rows="2"></textarea></div>
+                    <div class="form-actions"><button type="submit" class="btn-primary-custom"><i class="bi bi-check-circle"></i> Lưu</button><button type="button" onclick="document.getElementById('formThem').style.display='none'" class="btn-outline-custom">Hủy</button></div>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead><tr><th>ID</th><th>Tên</th><th>Thành phố</th><th>Quận/Huyện</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var kv in Model) {
+                            <tr>
+                                <td>@kv.Id</td><td><strong>@kv.TenKhuVuc</strong></td><td>@kv.ThanhPho</td><td>@kv.QuanHuyen</td>
+                                <td><button onclick="xoaKhuVuc(@kv.Id)" class="btn-icon btn-icon-danger"><i class="bi bi-trash"></i></button></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+function xoaKhuVuc(id) {
+    showConfirm('🗑️', 'Xóa khu vực', 'Bạn có chắc muốn xóa khu vực này?', function() {
+        fetch('/QuanTri/XoaKhuVuc', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'id=' + id})
+            .then(r => r.json())
+            .then(d => { if (d.success) { showSuccess('Đã xóa!', ''); setTimeout(function(){ location.reload(); }, 1500); } });
+    });
+}
+function uploadImage(input, inputId, previewId, statusId) {
+    var file = input.files[0];
+    if (!file) return;
+    var status = document.getElementById(statusId);
+    status.textContent = 'Đang tải...';
+    
+    var formData = new FormData();
+    formData.append('file', file);
+    
+    fetch('/QuanTri/UploadHinhAnh', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                document.getElementById(inputId).value = d.filePath;
+                var img = document.getElementById(previewId);
+                img.src = d.filePath;
+                img.style.display = 'block';
+                status.textContent = '✅ Xong';
+                status.style.color = '#2e7d32';
+            } else {
+                status.textContent = '❌ Lỗi';
+                status.style.color = '#e53935';
+            }
+        });
+}
+</script>
+}

@@ -1,0 +1,250 @@
+@model TrangChuViewModel
+@{
+    ViewData["Title"] = "Trang chủ";
+    var banner = Model.CaiDat.GetValueOrDefault("BannerTrangChu", "Đặt phòng homestay theo giờ – Check-in tự động!");
+}
+
+@{
+    var bannerImagesJson = Model.CaiDat.GetValueOrDefault("BannerImages", "[]");
+    var bannerImages = new List<string>();
+    try { bannerImages = System.Text.Json.JsonSerializer.Deserialize<List<string>>(bannerImagesJson) ?? new(); } catch {}
+}
+
+<!-- Hero Banner Slideshow -->
+<section class="hero-section">
+    <div class="hero-slider">
+        @if (bannerImages.Count > 0)
+        {
+            @for (int i = 0; i < bannerImages.Count; i++)
+            {
+                <div class="hero-slide @(i == 0 ? "active" : "")" style="background-image:url('@bannerImages[i]');background-size:cover;background-position:center;">
+                    <div class="hero-overlay"></div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="hero-slide active" style="background: linear-gradient(135deg, rgba(255,90,95,0.9), rgba(0,180,216,0.7));">
+            </div>
+        }
+        <div class="hero-content">
+            <div class="hero-actions animate-fade-up delay-2">
+                <a href="/Phong" class="btn-primary-custom"><i class="bi bi-search"></i> Tìm phòng ngay</a>
+                <a href="/DatPhong/TraCuu" class="btn-outline-custom"><i class="bi bi-qr-code"></i> Tra cứu đặt phòng</a>
+            </div>
+            <div class="hero-stats animate-fade-up delay-3">
+                <div class="hero-stat">
+                    <span class="stat-number">@Model.DanhSachPhong.Count+</span>
+                    <span class="stat-label">Phòng</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="stat-number">@Model.DanhSachKhuVuc.Count</span>
+                    <span class="stat-label">Khu vực</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="stat-number">24/7</span>
+                    <span class="stat-label">Self Check-in</span>
+                </div>
+            </div>
+        </div>
+        @if (bannerImages.Count > 1)
+        {
+            <div class="hero-dots">
+                @for (int i = 0; i < bannerImages.Count; i++)
+                {
+                    <span class="hero-dot @(i == 0 ? "active" : "")" onclick="goToSlide(@i)"></span>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Khu vực -->
+<section class="section-areas">
+    <div class="container-custom">
+        <div class="section-header">
+            <h2 class="section-title"><i class="bi bi-geo-alt-fill"></i> Khu vực nổi bật</h2>
+            <p class="section-desc">Khám phá các homestay tại những khu vực hot nhất</p>
+        </div>
+        <div class="areas-grid">
+            @foreach (var kv in Model.DanhSachKhuVuc)
+            {
+                var soPhong = Model.DanhSachPhong.Count(p => p.MaKhuVuc == kv.Id);
+                <a href="/Phong?maKhuVuc=@kv.Id" class="area-card">
+                    <div class="area-card-bg" style="background: linear-gradient(135deg, #ff5a5f, #ff8a5c);"></div>
+                    <div class="area-card-content">
+                        <i class="bi bi-buildings area-icon"></i>
+                        <h3>@kv.TenKhuVuc</h3>
+                        <p>@kv.ThanhPho</p>
+                        <span class="area-count">@soPhong phòng</span>
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Danh sách phòng -->
+<section class="section-rooms">
+    <div class="container-custom">
+        <div class="section-header">
+            <h2 class="section-title"><i class="bi bi-door-open-fill"></i> Phòng nổi bật</h2>
+            <p class="section-desc">Những phòng được yêu thích nhất</p>
+        </div>
+        <div class="rooms-grid">
+            @foreach (var phong in Model.DanhSachPhong)
+            {
+                var giaMin = phong.DanhSachGia?.Min(g => g.Gia) ?? 0;
+                var imgList2 = new List<string>();
+                if (!string.IsNullOrEmpty(phong.HinhAnh)) {
+                    try { imgList2 = System.Text.Json.JsonSerializer.Deserialize<List<string>>(phong.HinhAnh) ?? new(); } catch {}
+                    if (!imgList2.Any() && phong.HinhAnh.StartsWith("/")) imgList2.Add(phong.HinhAnh);
+                }
+                var firstImg2 = imgList2.FirstOrDefault();
+                <div class="room-card">
+                    <div class="room-card-image">
+                        @if (firstImg2 != null)
+                        {
+                            <img src="@firstImg2" alt="@phong.TenPhong" style="width:100%;height:100%;object-fit:cover;" />
+                        }
+                        else
+                        {
+                            <div class="room-card-placeholder">
+                                <i class="bi bi-house"></i>
+                            </div>
+                        }
+                        <span class="room-badge">@phong.LoaiPhong?.TenLoaiPhong</span>
+                        <div class="room-card-overlay">
+                            <a href="/Phong/ChiTiet/@phong.Id" class="btn-view">Xem chi tiết</a>
+                        </div>
+                    </div>
+                    <div class="room-card-body">
+                        <h3 class="room-name">@phong.TenPhong</h3>
+                        <p class="room-location"><i class="bi bi-geo-alt"></i> @phong.KhuVuc?.TenKhuVuc</p>
+                        <div class="room-features">
+                            <span><i class="bi bi-arrows-fullscreen"></i> @phong.DienTich m²</span>
+                            <span><i class="bi bi-people"></i> @phong.SoNguoiToiDa người</span>
+                        </div>
+                        <div class="room-card-footer">
+                            <div class="room-price">
+                                <span class="price-label">Từ</span>
+                                <span class="price-value">@giaMin.ToString("N0")đ</span>
+                                <span class="price-unit">/khung giờ</span>
+                            </div>
+                            <a href="/Phong/ChiTiet/@phong.Id" class="btn-book">
+                                <i class="bi bi-eye"></i> Xem chi tiết
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- How it works -->
+<section class="section-steps">
+    <div class="container-custom">
+        <div class="section-header">
+            <h2 class="section-title"><i class="bi bi-lightning-fill"></i> Cách đặt phòng</h2>
+            <p class="section-desc">Chỉ 3 bước đơn giản</p>
+        </div>
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <div class="step-icon"><i class="bi bi-search-heart"></i></div>
+                <h3>Chọn phòng</h3>
+                <p>Tìm phòng phù hợp theo khu vực và loại phòng</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <div class="step-icon"><i class="bi bi-calendar2-check"></i></div>
+                <h3>Chọn khung giờ</h3>
+                <p>Chọn ngày và khung giờ muốn sử dụng</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <div class="step-icon"><i class="bi bi-qr-code-scan"></i></div>
+                <h3>Self Check-in</h3>
+                <p>Quét QR và nhận mã mở cửa tự động</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .hero-slider { position: relative; overflow: hidden; }
+    .hero-slide {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 1s ease;
+    }
+    .hero-slide.active { opacity: 1; position: relative; }
+    .hero-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(0,0,0,0.45), rgba(0,0,0,0.25));
+    }
+    .hero-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 5;
+        padding: 2rem;
+        text-align: center;
+    }
+    .hero-dots {
+        position: absolute;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        display: flex;
+        gap: 8px;
+    }
+    .hero-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.4);
+        cursor: pointer;
+        transition: all .3s;
+        border: none;
+    }
+    .hero-dot.active, .hero-dot:hover { background: #fff; transform: scale(1.3); }
+</style>
+
+@section Scripts {
+<script>
+var slides = document.querySelectorAll('.hero-slide');
+var dots = document.querySelectorAll('.hero-dot');
+var currentSlide = 0;
+var slideInterval;
+
+function goToSlide(index) {
+    slides.forEach(function(s) { s.classList.remove('active'); });
+    dots.forEach(function(d) { d.classList.remove('active'); });
+    currentSlide = index;
+    slides[currentSlide].classList.add('active');
+    if (dots[currentSlide]) dots[currentSlide].classList.add('active');
+}
+
+function nextSlide() {
+    var next = (currentSlide + 1) % slides.length;
+    goToSlide(next);
+}
+
+if (slides.length > 1) {
+    slideInterval = setInterval(nextSlide, 4000);
+    
+    document.querySelector('.hero-slider').addEventListener('mouseenter', function() {
+        clearInterval(slideInterval);
+    });
+    document.querySelector('.hero-slider').addEventListener('mouseleave', function() {
+        slideInterval = setInterval(nextSlide, 4000);
+    });
+}
+</script>
+}

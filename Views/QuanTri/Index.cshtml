@@ -1,0 +1,132 @@
+@model QuanTriDashboardViewModel
+@{
+    ViewData["Title"] = "Quản trị - Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="admin-section">
+    <div class="container-custom">
+        <div class="admin-header">
+            <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+            <div class="admin-nav">
+                <a href="/QuanTri" class="admin-nav-link active"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                <a href="/QuanTri/DanhSachPhong" class="admin-nav-link"><i class="bi bi-house"></i> Phòng</a>
+                <a href="/QuanTri/DanhSachKhungGio" class="admin-nav-link"><i class="bi bi-clock"></i> Khung giờ</a>
+                <a href="/QuanTri/DanhSachDatPhong" class="admin-nav-link"><i class="bi bi-calendar-check"></i> Đặt phòng</a>
+                <a href="/QuanTri/DanhSachKhuVuc" class="admin-nav-link"><i class="bi bi-geo-alt"></i> Khu vực</a>
+                <a href="/QuanTri/GiaVaKhuyenMai" class="admin-nav-link"><i class="bi bi-tag"></i> Giá & KM</a>
+                <a href="/QuanTri/CaiDat" class="admin-nav-link"><i class="bi bi-gear"></i> Cài đặt</a>
+                <a href="/QuanTri/QuanLyTaiKhoan" class="admin-nav-link"><i class="bi bi-people"></i> Tài khoản</a>
+                <a href="/TaiKhoan/DangXuat" class="admin-nav-link logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card stat-primary">
+                <div class="stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
+                <div class="stat-info">
+                    <span class="stat-number">@Model.TongDatPhong</span>
+                    <span class="stat-label">Tổng đặt phòng</span>
+                </div>
+            </div>
+            <div class="stat-card stat-success">
+                <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+                <div class="stat-info">
+                    <span class="stat-number">@Model.DoanhThuThang.ToString("N0")đ</span>
+                    <span class="stat-label">Doanh thu tháng</span>
+                </div>
+            </div>
+            <div class="stat-card stat-warning">
+                <div class="stat-icon"><i class="bi bi-door-open-fill"></i></div>
+                <div class="stat-info">
+                    <span class="stat-number">@Model.PhongDangSuDung / @Model.TongPhong</span>
+                    <span class="stat-label">Phòng đang sử dụng</span>
+                </div>
+            </div>
+            <div class="stat-card stat-danger">
+                <div class="stat-icon"><i class="bi bi-exclamation-circle-fill"></i></div>
+                <div class="stat-info">
+                    <span class="stat-number">@Model.ChoXacNhan</span>
+                    <span class="stat-label">Chờ xác nhận</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Chart -->
+        <div class="admin-card">
+            <h3><i class="bi bi-bar-chart-fill"></i> Doanh thu 7 ngày gần nhất</h3>
+            <div class="chart-container">
+                <div class="simple-chart">
+                    @{
+                        var maxDT = Model.DoanhThuTheoNgay.Values.Any() ? Model.DoanhThuTheoNgay.Values.Max() : 1;
+                        if (maxDT == 0) maxDT = 1;
+                    }
+                    @foreach (var item in Model.DoanhThuTheoNgay)
+                    {
+                        var pct = (int)(item.Value / maxDT * 100);
+                        <div class="chart-bar-wrap">
+                            <div class="chart-bar" style="height:@(pct)%;">
+                                <span class="chart-value">@(item.Value > 0 ? (item.Value / 1000).ToString("N0") + "K" : "0")</span>
+                            </div>
+                            <span class="chart-label">@item.Key</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Bookings -->
+        <div class="admin-card">
+            <div class="card-header-flex">
+                <h3><i class="bi bi-clock-history"></i> Đặt phòng gần đây</h3>
+                <a href="/QuanTri/DanhSachDatPhong" class="btn-outline-custom btn-sm">Xem tất cả</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Mã</th>
+                            <th>Khách</th>
+                            <th>Phòng</th>
+                            <th>Ngày nhận</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Nguồn</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var dp in Model.DatPhongGanDay)
+                        {
+                            <tr>
+                                <td><strong>@dp.MaDatPhong</strong></td>
+                                <td>@dp.TenKhach</td>
+                                <td>@dp.Phong?.TenPhong</td>
+                                <td>@dp.NgayNhanPhong.ToString("dd-MM-yyyy")</td>
+                                <td>@dp.TongTien.ToString("N0")đ</td>
+                                <td>
+                                    @switch (dp.TrangThai)
+                                    {
+                                        case "ChoXacNhan": <span class="status-badge status-pending">Chờ xác nhận</span> break;
+                                        case "DaXacNhan": <span class="status-badge status-confirmed">Đã xác nhận</span> break;
+                                        case "DaNhanPhong": <span class="status-badge status-checkin">Đã nhận phòng</span> break;
+                                        case "HoanThanh": <span class="status-badge status-done">Hoàn thành</span> break;
+                                        case "DaHuy": <span class="status-badge status-cancel">Đã hủy</span> break;
+                                    }
+                                </td>
+                                <td>
+                                    @switch (dp.NguonDat)
+                                    {
+                                        case "Web": <span class="source-badge source-web"><i class="bi bi-globe"></i></span> break;
+                                        case "Messenger": <span class="source-badge source-messenger"><i class="bi bi-messenger"></i></span> break;
+                                        case "Zalo": <span class="source-badge source-zalo"><i class="bi bi-chat-dots"></i></span> break;
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>

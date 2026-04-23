@@ -1,0 +1,174 @@
+@using Booking_Homestay.Data
+@inject UngDungDbContext DbContext
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - HomeStay Booking</title>
+    <meta name="description" content="Hệ thống đặt phòng homestay theo giờ - Tự check-in thông minh" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
+    
+    @{
+        var mauChuDao = DbContext.CaiDatHeThong.FirstOrDefault(c => c.TenCaiDat == "MauChuDao")?.GiaTri ?? "#ff5a5f";
+        var mauPhu = DbContext.CaiDatHeThong.FirstOrDefault(c => c.TenCaiDat == "MauPhu")?.GiaTri ?? "#00b4d8";
+    }
+    <style>
+        :root {
+            --primary: @mauChuDao;
+            --secondary: @mauPhu;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar-main" id="mainNavbar">
+        <div class="nav-container">
+            <a class="nav-brand" href="/">
+                <i class="bi bi-house-heart-fill"></i>
+                <span>HomeStay</span>
+            </a>
+
+            <button class="nav-toggle" id="navToggle" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="/" class="nav-link"><i class="bi bi-house"></i> Trang chủ</a></li>
+                <li><a href="/Phong" class="nav-link"><i class="bi bi-door-open"></i> Phòng</a></li>
+                <li><a href="/DatPhong/TraCuu" class="nav-link"><i class="bi bi-search"></i> Tra cứu</a></li>
+                <li><a href="/TaiKhoan/DangNhap" class="nav-link nav-link-admin"><i class="bi bi-shield-lock"></i> Quản trị</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <button class="theme-toggle" id="themeToggle" title="Chuyển chế độ tối/sáng">
+                    <i class="bi bi-moon-fill"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    @if (TempData["ThongBao"] != null)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showSuccess('Thành công!', '@TempData["ThongBao"]');
+            });
+        </script>
+    }
+    @if (TempData["Loi"] != null)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showError('Lỗi!', '@TempData["Loi"]');
+            });
+        </script>
+    }
+
+    <!-- Global Modal -->
+    <div id="globalModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:20px;padding:32px;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:modalIn .3s ease;">
+            <div id="modalIcon" style="font-size:48px;margin-bottom:12px;">✅</div>
+            <h3 id="modalTitle" style="margin:0 0 8px;font-size:20px;font-weight:700;color:#2d3436;"></h3>
+            <p id="modalMsg" style="margin:0 0 24px;font-size:14px;color:#636e72;line-height:1.5;"></p>
+            <div id="modalActions" style="display:flex;gap:10px;justify-content:center;"></div>
+        </div>
+    </div>
+    <style>
+        @@keyframes modalIn { from{opacity:0;transform:scale(.9)} to{opacity:1;transform:scale(1)} }
+        .modal-btn{padding:10px 28px;border-radius:12px;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:all .2s;}
+        .modal-btn-primary{background:linear-gradient(135deg,#ff5a5f,#e04850);color:#fff;box-shadow:0 4px 12px rgba(255,90,95,.3);}
+        .modal-btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(255,90,95,.4);}
+        .modal-btn-success{background:linear-gradient(135deg,#06d6a0,#00b894);color:#fff;}
+        .modal-btn-danger{background:linear-gradient(135deg,#ff5a5f,#e04850);color:#fff;}
+        .modal-btn-outline{background:#f8f9fa;color:#636e72;border:1px solid #dfe6e9;}
+        .modal-btn-outline:hover{background:#eee;}
+    </style>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        @RenderBody()
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-main">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h3><i class="bi bi-house-heart-fill"></i> HomeStay</h3>
+                    <p>Hệ thống đặt phòng homestay theo giờ hiện đại. Tự do check-in, không cần chờ đợi!</p>
+                    <div class="footer-social">
+                        <a href="#"><i class="bi bi-facebook"></i></a>
+                        <a href="#"><i class="bi bi-instagram"></i></a>
+                        <a href="#"><i class="bi bi-tiktok"></i></a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4>Liên kết</h4>
+                    <ul>
+                        <li><a href="/">Trang chủ</a></li>
+                        <li><a href="/Phong">Danh sách phòng</a></li>
+                        <li><a href="/DatPhong/TraCuu">Tra cứu đặt phòng</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Liên hệ</h4>
+                    <ul>
+                        <li><i class="bi bi-telephone"></i> 0909 123 456</li>
+                        <li><i class="bi bi-envelope"></i> contact@homestay.vn</li>
+                        <li><i class="bi bi-geo-alt"></i> 123 Nguyễn Huệ, Q.1, TP.HCM</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 HomeStay Booking. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+    // ===== Global Modal System =====
+    function showModal(icon, title, msg, btnText, btnClass) {
+        var m = document.getElementById('globalModal');
+        document.getElementById('modalIcon').textContent = icon || '✅';
+        document.getElementById('modalTitle').textContent = title || '';
+        document.getElementById('modalMsg').innerHTML = msg || '';
+        var actions = document.getElementById('modalActions');
+        actions.innerHTML = '<button class="modal-btn ' + (btnClass || 'modal-btn-primary') + '" onclick="closeModal();">' + (btnText || 'OK') + '</button>';
+        m.style.display = 'flex';
+    }
+    function showSuccess(title, msg) { showModal('✅', title, msg, 'OK', 'modal-btn-success'); }
+    function showError(title, msg) { showModal('❌', title, msg, 'OK', 'modal-btn-danger'); }
+    function showInfo(title, msg) { showModal('ℹ️', title, msg, 'OK', 'modal-btn-primary'); }
+
+    function showConfirm(icon, title, msg, onYes) {
+        var m = document.getElementById('globalModal');
+        document.getElementById('modalIcon').textContent = icon || '⚠️';
+        document.getElementById('modalTitle').textContent = title || 'Xác nhận';
+        document.getElementById('modalMsg').innerHTML = msg || '';
+        var actions = document.getElementById('modalActions');
+        actions.innerHTML =
+            '<button class="modal-btn modal-btn-outline" onclick="closeModal();">Hủy</button>' +
+            '<button class="modal-btn modal-btn-primary" id="modalConfirmBtn">Xác nhận</button>';
+        document.getElementById('modalConfirmBtn').onclick = function() { closeModal(); if (onYes) onYes(); };
+        m.style.display = 'flex';
+    }
+    function closeModal() { document.getElementById('globalModal').style.display = 'none'; }
+    document.getElementById('globalModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
