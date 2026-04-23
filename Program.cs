@@ -10,17 +10,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<UngDungDbContext>(options =>
-{
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
-});
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromHours(2);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
 
+builder.Services.AddDbContext<UngDungDbContext>(options =>
+    options.UseMySql(connectionString,
+        new MySqlServerVersion(new Version(8, 0, 0))));
 // Email service
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddTransient<IEmailService, EmailService>();
