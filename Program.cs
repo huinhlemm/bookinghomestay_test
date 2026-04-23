@@ -9,19 +9,22 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services
 builder.Services.AddControllersWithViews();
+
 builder.Services.AddDbContext<UngDungDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    // Ưu tiên lấy từ biến môi trường DB_CONNECTION (cho Render/Railway), nếu không có thì lấy từ appsettings.json
+    var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION") 
+                           ?? builder.Configuration.GetConnectionString("DefaultConnection");
+    
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+});
+
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromHours(2);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
-var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-
-builder.Services.AddDbContext<UngDungDbContext>(options =>
-    options.UseMySql(connectionString,
-        new MySqlServerVersion(new Version(8, 0, 0))));
 // Email service
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddTransient<IEmailService, EmailService>();
